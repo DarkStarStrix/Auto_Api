@@ -45,8 +45,8 @@ automl/
 ├── lightning_auto.py   # Core AutoML engine
 ├── config.py          # Configuration templates
 ├── train.py          # Training script
-├── docs/             # Documentation
-└── examples/         # Example notebooks
+├── WriterSide/             # Documentation
+└── examples/         # Example notebooks # Coming soon!
 ```
 
 ## Quick Start
