@@ -1,0 +1,67 @@
+callbacks:
+  early_stopping:
+    enabled: true
+    min_delta: 0.001
+    mode: min
+    monitor: val_loss
+    patience: 5
+  learning_rate_monitor:
+    enabled: true
+    logging_interval: step
+  model_checkpoint:
+    enabled: true
+    mode: min
+    monitor: val_loss
+    save_top_k: 3
+data:
+  batch_size: 32
+  drop_last: false
+  num_workers: 4
+  persistent_workers: true
+  pin_memory: true
+  prefetch_factor: 2
+  shuffle: true
+logging:
+  log_every_n_steps: 10
+  save_dir: model_checkpoints
+  save_model: true
+  tensorboard: true
+  verbose: true
+model:
+  architecture:
+    activation: relu
+    dropout_rate: 0.2
+    num_layers: 2
+  hidden_dim: 128
+  input_dim: 10
+  output_dim: 5
+  task: classification
+  type: classification
+optimization:
+  accumulate_grad_batches: 1
+  compile_model: false
+  gradient_checkpointing: false
+  min_lr: 1.0e-06
+  mixed_precision: true
+  optimizer: adam
+  scheduler: cosine
+  weight_decay: 0.01
+training:
+  batch_size: 32
+  early_stopping: true
+  epochs: 20
+  gradient_clip_val: 1.0
+  learning_rate: 0.001
+  metrics:
+  - accuracy
+  - loss
+  patience: 5
+visualization:
+  enabled: true
+  log_dir: training_plots
+  plots:
+  - loss_curve
+  - learning_rate
+  - confusion_matrix
+  - class_distribution
+  - gradients
