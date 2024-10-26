@@ -115,6 +115,3 @@ def get_custom_config():
 ```bash
 pip install automl-pipeline
 ```
-
-## Documentation
-Detailed documentation available at [docs.automl.dev](http://docs.automl.dev)
