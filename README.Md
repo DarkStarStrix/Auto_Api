@@ -45,8 +45,8 @@ automl/
 ├── lightning_auto.py   # Core AutoML engine
 ├── config.py          # Configuration templates
 ├── train.py          # Training script
-├── docs/             # Documentation
-└── examples/         # Example notebooks
+├── WriterSide/             # Documentation
+└── examples/         # Example notebooks # Coming soon!
 ```
 
 ## Quick Start
@@ -115,6 +115,3 @@ def get_custom_config():
 ```bash
 pip install automl-pipeline
 ```
-
-## Documentation
-Detailed documentation available at [docs.automl.dev](http://docs.automl.dev)
