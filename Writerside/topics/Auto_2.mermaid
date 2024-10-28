@@ -1,0 +1,33 @@
+flowchart TD
+    subgraph Input
+        A[Raw Data] --> B[Data Pipeline]
+        C[Configuration] --> D[AutoML Setup]
+    end
+
+    subgraph DataProcessing["Data Processing"]
+        B --> E[DataLoader]
+        E --> F[Batch Processing]
+    end
+
+    subgraph Training["Training Loop"]
+        F --> G[Model Forward Pass]
+        G --> H[Loss Computation]
+        H --> I[Optimization Step]
+        I --> J[Metrics Logging]
+    end
+
+    subgraph Monitoring["Monitoring & Visualization"]
+        J --> K[Loss Plots]
+        J --> L[LR Curves]
+        J --> M[Confusion Matrix]
+        J --> N[Class Distribution]
+    end
+
+    subgraph Output["Output"]
+        K & L & M & N --> O[Training Reports]
+        Training --> P[Trained Model]
+    end
+
+    style Training fill:#f9f,stroke:#333,stroke-width:2px
+    style DataProcessing fill:#bbf,stroke:#333,stroke-width:2px
+    style Monitoring fill:#bfb,stroke:#333,stroke-width:2px

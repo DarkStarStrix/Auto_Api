@@ -1,0 +1,81 @@
+classDiagram
+    class AutoML {
+        +config: Dict
+        +model: nn.Module
+        +steps_per_epoch: int
+        +_setup_pipeline()
+        +fit(train_data, val_data)
+        +training_step(batch, batch_idx)
+        +validation_step(batch, batch_idx)
+        +configure_optimizers()
+    }
+
+    class LightningModule {
+        <<PyTorch Lightning>>
+    }
+
+    class DataPipeline {
+        +batch_size: int
+        +num_workers: int
+        +pin_memory: bool
+        +_setup_data_pipeline()
+        +_prepare_dataset()
+        +train_dataloader()
+        +val_dataloader()
+    }
+
+    class Optimization {
+        +device_type: str
+        +use_amp: bool
+        +strategy: str
+        +_setup_optimizations()
+        +accumulate_grad_batches()
+    }
+
+    class Training {
+        +visualization: bool
+        +metrics: bool
+        +_setup_training()
+        +_compute_loss()
+    }
+
+    class VisualizationCallback {
+        +log_dir: str
+        +training_losses: List
+        +validation_losses: List
+        +learning_rates: List
+        +on_train_epoch_end()
+        +_plot_losses()
+        +_plot_lr_curve()
+        +_plot_gradients()
+        +_plot_model_predictions()
+    }
+
+    class MetricsCallback {
+        +epoch_metrics: Dict
+        +on_train_epoch_start()
+        +on_train_epoch_end()
+    }
+
+    class ModelArchitecture {
+        +input_dim: int
+        +hidden_dim: int
+        +output_dim: int
+        +_create_model()
+    }
+
+    AutoML --|> LightningModule
+    AutoML *-- DataPipeline
+    AutoML *-- Optimization
+    AutoML *-- Training
+    AutoML *-- ModelArchitecture
+    AutoML o-- VisualizationCallback
+    AutoML o-- MetricsCallback
+
+    note for AutoML "Core class handling all ML pipeline components"
+    note for DataPipeline "Handles data processing and loading"
+    note for Optimization "Manages training optimizations"
+    note for Training "Controls training process"
+    note for VisualizationCallback "Generates training visualizations"
+    note for ModelArchitecture "Defines model structure"
+

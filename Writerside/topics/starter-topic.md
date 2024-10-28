@@ -320,3 +320,193 @@ if __name__ == "__main__":
 ```
 
 This structure makes the script modular and easy to adapt for different machine learning tasks by modifying the configuration and data preparation steps.
+
+## Class Architecture Diagram Analysis
+
+The class architecture diagram illustrates the modular and hierarchical structure of the AutoML Pipeline.
+At its core is the `AutoML` class, which inherits from PyTorch Lightning's `LightningModule`,
+providing a robust foundation for deep learning workflows.
+This design showcases a clear separation of concerns through composition,
+where each major functionality is encapsulated in its own component.
+
+The primary components include `DataPipeline`, `Optimization`, `Training`, and `ModelArchitecture`,
+each handling specific aspects of the machine learning process.
+The `DataPipeline` manages data processing and loading,
+implementing efficient data handling with features like automatic worker optimization and batch processing.
+The `Optimization` component encapsulates training optimizations such as mixed precision training and device management,
+ensuring efficient resource utilization.
+
+The architecture employs two key callback classes: `VisualizationCallback` and `MetricsCallback`.
+The `VisualizationCallback` is responsible for generating comprehensive training visualizations,
+including loss curves, learning rate schedules, and prediction distributions.
+The `MetricsCallback` handles detailed metric logging and epoch summaries,
+providing clear insights into training progress.
+
+```mermaid
+classDiagram
+    class AutoML {
+        +config: Dict
+        +model: nn.Module
+        +steps_per_epoch: int
+        +_setup_pipeline()
+        +fit(train_data, val_data)
+        +training_step(batch, batch_idx)
+        +validation_step(batch, batch_idx)
+        +configure_optimizers()
+    }
+
+    class LightningModule {
+        <<PyTorch Lightning>>
+    }
+
+    class DataPipeline {
+        +batch_size: int
+        +num_workers: int
+        +pin_memory: bool
+        +_setup_data_pipeline()
+        +_prepare_dataset()
+        +train_dataloader()
+        +val_dataloader()
+    }
+
+    class Optimization {
+        +device_type: str
+        +use_amp: bool
+        +strategy: str
+        +_setup_optimizations()
+        +accumulate_grad_batches()
+    }
+
+    class Training {
+        +visualization: bool
+        +metrics: bool
+        +_setup_training()
+        +_compute_loss()
+    }
+
+    class VisualizationCallback {
+        +log_dir: str
+        +training_losses: List
+        +validation_losses: List
+        +learning_rates: List
+        +on_train_epoch_end()
+        +_plot_losses()
+        +_plot_lr_curve()
+        +_plot_gradients()
+        +_plot_model_predictions()
+    }
+
+    class MetricsCallback {
+        +epoch_metrics: Dict
+        +on_train_epoch_start()
+        +on_train_epoch_end()
+    }
+
+    class ModelArchitecture {
+        +input_dim: int
+        +hidden_dim: int
+        +output_dim: int
+        +_create_model()
+    }
+
+    AutoML --|> LightningModule
+    AutoML *-- DataPipeline
+    AutoML *-- Optimization
+    AutoML *-- Training
+    AutoML *-- ModelArchitecture
+    AutoML o-- VisualizationCallback
+    AutoML o-- MetricsCallback
+
+    note for AutoML "Core class handling all ML pipeline components"
+    note for DataPipeline "Handles data processing and loading"
+    note for Optimization "Manages training optimizations"
+    note for Training "Controls training process"
+    note for VisualizationCallback "Generates training visualizations"
+    note for ModelArchitecture "Defines model structure"
+```
+
+This architecture's strength lies in its modularity.
+Each component can be enhanced or modified independently, making the system highly maintainable and extensible.
+The clear hierarchical structure ensures that responsibilities are well-defined,
+with the `AutoML`
+class orchestrating the interactions between components while delegating specific tasks to specialized classes.
+
+## Data Flow Diagram Analysis
+
+The data flow diagram provides a comprehensive visualization of how data moves through the AutoML Pipeline system,
+illustrating the complete machine learning workflow from raw data to final output.
+The process is divided into distinct stages, each handling specific aspects of the machine learning pipeline.
+
+The flow begins in the Input stage, where raw data and configuration settings enter the system.
+The configuration defines the model architecture, training parameters, and optimization settings,
+while the raw data moves through the Data Processing stage.
+Here, the data is transformed into batches through the DataLoader system,
+implementing efficient data loading strategies with optimized worker configurations.
+
+The Training Loop stage represents the core of the system, where data flows through the model in a cyclical pattern.
+Each batch moves through the forward pass, loss computation, and optimization steps,
+with the system automatically handling device placement (CPU/GPU) and mixed precision training.
+This stage is tightly integrated with the Monitoring & Visualization stage,
+which continuously captures training metrics and generates various visualizations.
+
+The Output stage shows the dual outcomes of the pipeline: the trained model and comprehensive training reports.
+The reports include various visualizations like loss plots,
+learning rate curves, confusion matrices, and class distributions,
+providing deep insights into the model's performance and training dynamics.
+
+This flow design emphasizes automation and efficiency,
+with data moving seamlessly between stages while various optimization and monitoring processes occur automatically.
+The system's ability to handle both the core training process
+and generate detailed visualizations without manual intervention demonstrates its sophisticated automation capabilities.
+
+Both diagrams together provide a complete picture of the AutoML Pipeline:
+- The class architecture shows how the code is organized and structured
+- The data flow diagram illustrates how data moves through this structure
+- Together, they demonstrate how the system achieves its goal of automating machine learning workflows while maintaining flexibility and extensibility
+
+The combination of modular architecture and streamlined data flow results in a system that is:
+1. Easy to understand and modify
+2. Efficient in operation
+3. Comprehensive monitoring
+4. Automated optimization
+5. Flexible in application
+
+```mermaid
+flowchart TD
+    subgraph Input
+        A[Raw Data] --> B[Data Pipeline]
+        C[Configuration] --> D[AutoML Setup]
+    end
+
+    subgraph DataProcessing["Data Processing"]
+        B --> E[DataLoader]
+        E --> F[Batch Processing]
+    end
+
+    subgraph Training["Training Loop"]
+        F --> G[Model Forward Pass]
+        G --> H[Loss Computation]
+        H --> I[Optimization Step]
+        I --> J[Metrics Logging]
+    end
+
+    subgraph Monitoring["Monitoring & Visualization"]
+        J --> K[Loss Plots]
+        J --> L[LR Curves]
+        J --> M[Confusion Matrix]
+        J --> N[Class Distribution]
+    end
+
+    subgraph Output["Output"]
+        K & L & M & N --> O[Training Reports]
+        Training --> P[Trained Model]
+    end
+
+    style Training fill:#f9f,stroke:#333,stroke-width:2px
+    style DataProcessing fill:#bbf,stroke:#333,stroke-width:2px
+    style Monitoring fill:#bfb,stroke:#333,stroke-width:2px
+    
+```
+
+This architecture successfully balances complexity and usability,
+providing powerful automation features while maintaining clarity and extensibility in its design.
