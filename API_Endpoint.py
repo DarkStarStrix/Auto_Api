@@ -1,46 +1,52 @@
-# main.py
-from fastapi import FastAPI, HTTPException, Request
 import requests
-import torch
 from lightning_auto import AutoML
 
-app = FastAPI ()
+
+def main():
+    # Authenticate with the API
+    api_token = get_api_token()
+
+    # Get the configuration template
+    config = get_config_template("linear")
+
+    # Optionally modify the configuration
+    config["model"]["output_dim"] = 5
+
+    # Start the training process
+    response = requests.post(
+        "https://api.automl.dev/v1/train",
+        json={"config_name": "linear", "config_overrides": config["model"]},
+        headers={"Authorization": f"Bearer {api_token}"}
+    )
+    job_id = response.json()["job_id"]
+
+    # Monitor the training progress
+    model_info = requests.get(
+        f"https://api.automl.dev/v1/models/{job_id}",
+        headers={"Authorization": f"Bearer {api_token}"}
+    ).json()
+    print(f"Training status: {model_info['status']}")
+    print(f"Training metrics: {model_info['metrics']}")
+
+    # Save the model
+    torch.save(auto_ml.model.state_dict(), "model.pt")
 
 
-# Define the API endpoint for training
-@app.post ("/api/train")
-async def api_train(request: Request):
-    try:
-        # Get the configuration from the request
-        config = await request.json ()
+def get_api_token():
+    response = requests.post(
+        "https://api.automl.dev/v1/auth/token",
+        json={"username": "your_username", "password": "your_password"}
+    )
+    return response.json()["access_token"]
 
-        # Create an instance of AutoML with the provided configuration
-        auto_ml = AutoML (config)
 
-        # Generate example training and validation data
-        train_features = torch.randn (1000, config ["model"] ["input_dim"])
-        train_labels = torch.randint (0, config ["model"] ["output_dim"], (1000,))
-        val_features = torch.randn (200, config ["model"] ["input_dim"])
-        val_labels = torch.randint (0, config ["model"] ["output_dim"], (200,))
+def get_config_template(config_name):
+    response = requests.get(
+        f"https://api.automl.dev/v1/configs/{config_name}",
+    )
+    return response.json()["config"]
 
-        train_data = torch.utils.data.DataLoader (
-            torch.utils.data.TensorDataset (train_features, train_labels),
-            batch_size=config ["data"] ["batch_size"],
-            shuffle=True
-        )
-        val_data = torch.utils.data.DataLoader (
-            torch.utils.data.TensorDataset (val_features, val_labels),
-            batch_size=config ["data"] ["batch_size"]
-        )
 
-        # Train the model
-        auto_ml.fit (train_data, val_data)
-
-        # Save the model
-        model_path = "model.pt"
-        torch.save (auto_ml.model.state_dict (), model_path)
-
-        return {"message": "Training completed successfully", "model_path": model_path}
-    except Exception as e:
-        raise HTTPException (status_code=500, detail=str (e))
+if __name__ == "__main__":
+    main()
 

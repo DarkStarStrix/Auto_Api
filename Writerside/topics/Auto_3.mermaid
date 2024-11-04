@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant User
+    participant API
+    participant train.py
+
+    User->>API: POST /auth/token
+    API-->>User: Access Token
+
+    User->>API: GET /configs
+    API-->>User: Available Configurations
+
+    User->>API: GET /configs/linear
+    API-->>User: Linear Config Template
+
+    User->>train.py: Import Config, AutoML
+    train.py->>train.py: Modify Config
+    train.py->>API: POST /train
+    API-->>train.py: Job ID, Training Status, Metrics
+
+    loop Monitor Training
+        train.py->>API: GET /models/{job_id}
+        API-->>train.py: Model Info, Training Status, Metrics
+    end
+
+    train.py->>train.py: Save Trained Model
