@@ -106,3 +106,7 @@ def get_custom_config():
    - Create feature branch
    - Add tests
    - Submit pull request
+
+<div style="text-align: center;">
+  <img src="Auto_API.PNG" alt="Auto_API" style="width:50%;"/>
+</div>
