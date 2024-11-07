@@ -36,13 +36,114 @@ def get_linear_config():
         },
         "data": {
             "batch_size": 32,
-            "num_workers": 4,
+            "num_workers": 7,
             "pin_memory": True
         },
         "logging": {
             "tensorboard": True,
             "log_every_n_steps": 10,
             "metrics": ["accuracy"]
+        }
+    }
+
+
+def get_linear_regression_config():
+    """Get optimized configuration for a linear regression model."""
+    return {
+        "model": {
+            "type": "regression",
+            "input_dim": 10,
+            "output_dim": 1,
+            "task": "regression"
+        },
+        "training": {
+            "learning_rate": 0.01,
+            "epochs": 100,
+            "batch_size": 32,
+            "early_stopping": True,
+            "patience": 10
+        },
+        "optimization": {
+            "optimizer": "adam",
+            "scheduler": "cosine",
+            "weight_decay": 0.001,
+            "min_lr": 1e-6,
+            "gradient_clip_val": 1.0,
+            "mixed_precision": True
+        },
+        "data": {
+            "batch_size": 32,
+            "num_workers": 7,
+            "pin_memory": True
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_every_n_steps": 10,
+            "metrics": ["mse", "r2"]
+        }
+    }
+
+
+def get_logistic_regression_config():
+    """Get configuration for a logistic regression model with optimal hyperparameters."""
+    return {
+        "model": {
+            "type": "logistic_regression",
+            "input_dim": 10,  # Adjust based on your data
+            "output_dim": 1,  # Binary classification
+            "task": "binary_classification"
+        },
+        "training": {
+            "epochs": 50,
+            "batch_size": 32,
+            "learning_rate": 0.001,
+            "early_stopping": True,
+            "patience": 5,
+            "validation_split": 0.2,
+            "gradient_clip_val": 1.0,
+            "visualization": True,
+            "metrics": ["accuracy", "precision", "recall", "f1"]
+        },
+        "optimization": {
+            "optimizer": {
+                "type": "adam",
+                "betas": (0.9, 0.999),
+                "epsilon": 1e-8,
+                "weight_decay": 0.01,
+            },
+            "scheduler": {
+                "type": "cosine",
+                "min_lr": 1e-6,
+                "warmup_epochs": 3
+            },
+            "mixed_precision": True,
+            "gradient_clip": True,
+            "gradient_clip_val": 1.0,
+            "gradient_accumulation_steps": 1
+        },
+        "data": {
+            "batch_size": 32,
+            "num_workers": 4,
+            "pin_memory": True,
+            "prefetch_factor": 2,
+            "persistent_workers": True,
+            "preprocessing": {
+                "normalize": True,
+                "handle_missing": "mean",
+                "handle_categorical": "one_hot"
+            }
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_every_n_steps": 10,
+            "save_dir": "logs/logistic_regression",
+            "metrics": ["accuracy", "f1", "precision", "recall"],
+            "save_visualization": True
+        },
+        "hyperparameters": {
+            "weight_initialization": "xavier_uniform",
+            "dropout_rate": 0.0,  # Usually not needed for simple logistic regression
+            "bias_init": 0.0
         }
     }
 

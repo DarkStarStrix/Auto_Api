@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 def main():
     # Get configuration
-    config = get_linear_config ()
+    config = get_linear_config()
 
     # Optionally modify config for your specific case
     config ["model"] ["output_dim"] = 5  # Example modification
