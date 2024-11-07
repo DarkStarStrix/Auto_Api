@@ -240,7 +240,7 @@ def __init__(self, config: Dict[str, Any]):
     self.model = self._create_model()
 ```
 - Stores configuration dictionary
-- Saves hyperparameters for experiment tracking
+- Save hyperparameters for experiment tracking
 - Creates model architecture through abstract method
 
 ### 2. Abstract Methods
@@ -539,7 +539,7 @@ trainer.fit(model, train_dataloader, val_dataloader)
 2. **Metric Logging**:
    - All metrics are logged with progress bar
    - Metrics are computed without gradients
-   - Zero division is handled safely
+   - Zero divisions are handled safely
 
 3. **Visualization**:
    - Each model has specific visualizations
@@ -842,27 +842,31 @@ def _plot_metrics_over_time(self):
     """Time series plot of classification metrics"""
     # Generates: metrics_over_time.png
 ```
-![metrics_over_time.png](metrics_over_time.png)
+
+![](../../training_plots/logistic_regression/metrics_over_time.png)
 
 ```python
 def _plot_roc_curve(self):
     """ROC curve with AUC score"""
     # Generates: roc_curve.png
 ```
-![roc_curve.png](roc_curve.png)
+
+![](../../training_plots/logistic_regression/roc_curve.png)
 
 ```python
 def _plot_confusion_matrix(self):
     """Confusion matrix heatmap"""
     # Generates: confusion_matrix.png
 ```
-![Confusion Matrix](confusion_matrix.png)
+
+![](../../training_plots/logistic_regression/confusion_matrix.png)
 
 ```python
 def _plot_probability_distribution(self):
     """Distribution of predicted probabilities"""
     # Generates: probability_distribution.png
 ```
+![](../../training_plots/logistic_regression/probability_distribution.png)
 
 ### 2. LinearRegressionVisualizer
 
@@ -874,7 +878,7 @@ Provides visualization capabilities for regression models.
 - R² Score
 - Training/Validation Loss
 - Residuals
-- Predictions vs Actuals
+- Predictions vs. Actual
 
 #### Visualizations Generated
 ```python
@@ -977,7 +981,7 @@ def _plot_any_metric(self):
 
 ### Regression Metrics
 - Residual plots show error patterns
-- Predictions vs actuals show model accuracy
+- Predictions vs. actual show model accuracy
 - R² score tracks explained variance
 
 ## Class Architecture Diagram Analysis
