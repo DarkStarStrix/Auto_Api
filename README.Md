@@ -108,5 +108,5 @@ def get_custom_config():
    - Submit pull request
 
 <div style="text-align: center;">
-  <img src="Auto_API.PNG" alt="Auto_API" style="width:50%;"/>
+  <img src="Auto_API.png" alt="Auto_API" style="width:50%;"/>
 </div>
