@@ -1,0 +1,18 @@
+{
+  "name": "auto_api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DarkStarStrix/Auto_Api.git"
+  },
+  "private": true,
+  "dependencies": {
+    "lucide-react": "^0.456.0",
+    "react": "^18.3.1"
+  }
+}

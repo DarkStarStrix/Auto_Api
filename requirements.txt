@@ -9,7 +9,15 @@ FastAPI~=0.109.1
 requests~=2.32.3
 uvicorn~=0.15.0
 requests~=2.32.0
-
 Config~=0.5.1
 scikit-learn~=1.5.2
 seaborn~=0.11.2
+pydantic~=1.10.18
+jwt~=1.3.1
+api~=1.0.0.dev5
+jose~=1.0.0
+response~=0.1.0
+Validation~=0.1.0
+constants~=0.6.0
+Rich~=13.9.0
+click~=8.1.7
