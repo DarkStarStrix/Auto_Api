@@ -40,25 +40,43 @@ auto_ml.fit(train_data, val_data)
 ## 📈 Visualization Analysis
 
 ### 1. Class Distribution
-- Class 2 shows the highest prediction rate (~50 samples)
-- Class 0 (~27 samples) and Class 4 (~20 samples) show moderate representation
-- Shows room for balancing improvements
+<img src="training_plots/class_distribution.png" alt="Class Distribution" width="600"/>
 
-### 2. Classification Matrix
-- Strong diagonal presence indicating good classification
-- Class 2 shows the highest confidence (10–14 correct predictions)
-- Some confusion between adjacent classes
-- Room for improvement in Class 3 discrimination
+> [!NOTE]
+> The distribution plot shows:
+> - Class 2 dominates with ~50 samples
+> - Class 0 follows with ~27 samples
+> - Class 4 has the least representation with ~20 samples
+> - Clear indication of class imbalance that may need addressing
+
+### 2. Classification Results
+<img src="training_plots/classification_results.png" alt="Classification Matrix" width="600"/>
+
+> [!IMPORTANT]
+> Key observations from the confusion matrix:
+> - Strong diagonal pattern indicates good overall classification
+> - Class 2 shows highest confidence with 10-14 correct predictions
+> - Some misclassifications between neighboring classes
+> - Class 3 shows room for improvement in discrimination
 
 ### 3. Training Dynamics
-- Training loss shows healthy fluctuation (1.54–1.70)
-- Validation loss remains stable (~1.62)
-- Indicates good generalization without overfitting
+<img src="training_plots/loss_plot.png" alt="Loss During Training" width="600"/>
+
+> [!TIP]
+> The loss plot reveals:
+> - Training loss (blue) shows healthy fluctuation between 1.54-1.70
+> - Validation loss (orange) maintains stability around 1.62
+> - No significant overfitting as validation loss remains stable
+> - Good model convergence with occasional exploration spikes
 
 ### 4. Learning Rate Schedule
-- Smooth cosine decay from 2e-3 to 9e-4
-- Proper annealing behavior
-- Suggests stable optimization
+<img src="training_plots/lr_curve.png" alt="Learning Rate Schedule" width="600"/>
+
+> [!NOTE]
+> The learning rate schedule demonstrates:
+> - Smooth cosine decay from 2e-3 to 9e-4
+> - Gradual learning rate reduction for fine-tuning
+> - Proper annealing behavior for optimization stability
 
 ## 📁 Project Structure
 
@@ -123,10 +141,11 @@ def get_custom_config():
    - Add tests
    - Submit pull request
 
-## 🎯 Logo 
+## 🎯 API Architecture
 <div style="text-align: center;">
   <img src="Auto_API.png" alt="Auto API Architecture" style="width:50%;"/>
 </div>
 
 ## 📝 License
+
 This project is licensed under the MIT License - see the LICENSE file for details.
