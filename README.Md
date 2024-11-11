@@ -123,7 +123,7 @@ def get_custom_config():
    - Add tests
    - Submit pull request
 
-## 🎯 API Architecture
+## 🎯 Logo 
 <div style="text-align: center;">
   <img src="Auto_API.png" alt="Auto API Architecture" style="width:50%;"/>
 </div>
