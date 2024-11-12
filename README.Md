@@ -52,7 +52,7 @@ auto_ml.fit(train_data, val_data)
 ### 2. Classification Results
 <img src="training_plots/classification_results.png" alt="Classification Matrix" width="600"/>
 
-> [!IMPORTANT]
+> [!NOTE]
 > Key observations from the confusion matrix:
 > - Strong diagonal pattern indicates good overall classification
 > - Class 2 shows highest confidence with 10-14 correct predictions
@@ -62,7 +62,7 @@ auto_ml.fit(train_data, val_data)
 ### 3. Training Dynamics
 <img src="training_plots/loss_plot.png" alt="Loss During Training" width="600"/>
 
-> [!TIP]
+> [!NOTE]
 > The loss plot reveals:
 > - Training loss (blue) shows healthy fluctuation between 1.54-1.70
 > - Validation loss (orange) maintains stability around 1.62
