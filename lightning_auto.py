@@ -100,6 +100,14 @@ def _prepare_data(data):
     return TensorDataset (features, targets)
 
 
+def _prepare_data(data):
+    if isinstance (data, np.ndarray):
+        features = torch.FloatTensor (data [:, :-1])
+        targets = torch.FloatTensor (data [:, -1])
+        return TensorDataset (features, targets)
+    raise ValueError ("Data must be numpy array")
+
+
 class AutoML:
     def __init__(self, config: Dict [str, Any]):
         self.config = config
@@ -114,17 +122,10 @@ class AutoML:
         else:
             raise ValueError (f"Unsupported model type: {model_type}")
 
-    def _prepare_data(self, data):
-        if isinstance (data, np.ndarray):
-            features = torch.FloatTensor (data [:, :-1])
-            targets = torch.FloatTensor (data [:, -1])
-            return TensorDataset (features, targets)
-        raise ValueError ("Data must be numpy array")
-
     def fit(self, train_data, val_data=None):
         # Prepare datasets
-        train_dataset = self._prepare_data (train_data)
-        val_dataset = self._prepare_data (val_data) if val_data is not None else None
+        train_dataset = _prepare_data (train_data)
+        val_dataset = _prepare_data (val_data) if val_data is not None else None
 
         # Create dataloaders
         train_loader = DataLoader (

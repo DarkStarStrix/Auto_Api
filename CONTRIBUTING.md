@@ -1,84 +1,74 @@
-# Contributing to AutoML Pipeline
+# Contributing to AutoML API
 
-## Ways to Contribute
-1. Adding Configuration Templates
-2. Improving Core Functionality
-3. Documentation
-4. Bug Reports
-5. Feature Requests
+## Setting up Development Environment
 
-## Configuration Templates
-### Adding New Templates
-1. Create new template in `config.py`
-2. Include documentation
-3. Add example usage
-4. Submit PR
-
-Example:
-```python
-def get_vision_config():
-    """
-    Configuration template for computer vision tasks.
-    
-    Returns:
-        dict: Configuration dictionary
-    """
-    return {
-        "model": {
-            "type": "vision",
-            "architecture": "resnet18"
-        }
-        # ... other parameters
-    }
-```
-
-## Core Development
-### Setting Up Development Environment
+1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/automl-pipeline
-cd automl-pipeline
-pip install -e ".[dev]"
+git clone https://github.com/yourusername/automl-api.git
+cd automl-api
 ```
 
-### Running Tests
+2. Create a virtual environment:
 ```bash
-pytest tests/
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-### Code Style
-- Follow PEP 8
-- Use type hints
-- Add docstrings
-- Keep functions focused
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+4. Set up pre-commit hooks:
+```bash
+pre-commit install
+```
+
+## Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=.
+
+# Run specific test categories
+pytest -m "not slow"
+```
+
+## Code Style
+
+- Use Black for code formatting
+- Sort imports with isort
+- Follow PEP 8 guidelines
+- Write docstrings in Google style
 
 ## Pull Request Process
-1. Create feature branch
-2. Add tests
-3. Update documentation
-4. Submit PR
-5. Address reviews
 
-## API Development
-### Endpoint Structure
-```
-/api/v1/
-├── models/
-├── configs/
-└── training/
-```
+1. Create a feature branch from `develop`
+2. Make your changes
+3. Run tests locally
+4. Push your changes
+5. Create a PR to `develop`
 
-### Adding New Endpoints
-1. Create endpoint in `api/`
-2. Add tests
-3. Update API documentation
-4. Submit PR
+## CI/CD Pipeline
 
-## Documentation
-### Adding Tutorials
-1. Create markdown file in `docs/tutorials/`
-2. Include:
-   - Overview
-   - Code examples
-   - Results
-   - Visualizations
-3. Submit PR
+The CI/CD pipeline includes:
+1. Code quality checks
+2. Security scanning
+3. Testing
+4. Building and pushing Docker image
+5. Deployment
+
+### Required Secrets
+
+Set these in GitHub repository settings:
+- `JWT_SECRET_KEY`
+- `VALID_API_KEY`
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+- `SSH_HOST`
+- `SSH_USERNAME`
+- `SSH_PRIVATE_KEY`
