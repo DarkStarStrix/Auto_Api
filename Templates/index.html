@@ -36,6 +36,7 @@ const AutoMLDashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      data.templates = undefined;
       setTemplates(data.templates);
     } catch (err) {
       setError('Failed to fetch templates');
