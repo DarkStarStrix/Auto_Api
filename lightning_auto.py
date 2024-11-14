@@ -17,7 +17,7 @@ def _convert_to_dataset(data):
         data = torch.from_numpy (data)
 
     if isinstance (data, torch.Tensor):
-        # Assuming last column is target for structured data
+        # Assuming the last column is target for structured data
         if len (data.shape) == 2:
             features = data [:, :-1]
             targets = data [:, -1]

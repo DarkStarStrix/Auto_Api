@@ -26,8 +26,9 @@ class LogisticRegressionVisualizer (Callback):
         self.training_losses = []
         self.validation_losses = []
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        """Collect predictions and actual values."""
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        """Collect predictions and actual values.
+        """
         x, y = batch
         with torch.no_grad ():
             probs = pl_module (x)
@@ -150,8 +151,9 @@ class LinearRegressionVisualizer (Callback):
         self.validation_losses = []
         self.residuals = []
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        """Collect predictions and actual values."""
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        """Collect predictions and actual values.
+        """
         x, y = batch
         with torch.no_grad ():
             preds = pl_module (x)

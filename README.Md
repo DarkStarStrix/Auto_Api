@@ -47,7 +47,7 @@ auto_ml.fit(train_data, val_data)
 > - Class 2 dominates with ~50 samples
 > - Class 0 follows with ~27 samples
 > - Class 4 has the least representation with ~20 samples
-> - Clear indication of class imbalance that may need addressing
+> - Clear sign of class imbalance that may need addressing
 
 ### 2. Classification Results
 <img src="training_plots/classification_results.png" alt="Classification Matrix" width="600"/>
@@ -55,8 +55,8 @@ auto_ml.fit(train_data, val_data)
 > [!NOTE]
 > Key observations from the confusion matrix:
 > - Strong diagonal pattern indicates good overall classification
-> - Class 2 shows highest confidence with 10-14 correct predictions
-> - Some misclassifications between neighboring classes
+> - Class 2 shows the highest confidence with 10–14 correct predictions
+> - Some classifications between neighboring classes
 > - Class 3 shows room for improvement in discrimination
 
 ### 3. Training Dynamics
@@ -64,7 +64,7 @@ auto_ml.fit(train_data, val_data)
 
 > [!NOTE]
 > The loss plot reveals:
-> - Training loss (blue) shows healthy fluctuation between 1.54-1.70
+> - Training loss (blue) shows healthy fluctuation between 1.54–1.70
 > - Validation loss (orange) maintains stability around 1.62
 > - No significant overfitting as validation loss remains stable
 > - Good model convergence with occasional exploration spikes
@@ -130,8 +130,8 @@ def get_custom_config():
         }
     }
 ```
-2. Add documentation and example usage
-3. Submit a pull request
+1. Add documentation and example usage
+2. Submit a pull request
 
 ### Backend Development
 
@@ -148,4 +148,4 @@ def get_custom_config():
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License—see the LICENSE file for details.

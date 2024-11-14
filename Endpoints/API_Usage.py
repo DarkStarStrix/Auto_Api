@@ -35,7 +35,7 @@ class AutoMLClient:
         return response.json ()
 
     def get_job_status(self, job_id: str):
-        """Get status of a specific job"""
+        """Get the status of a specific job"""
         headers = {"Authorization": f"Bearer {self.token}"}
         response = requests.get (
             f"{self.base_url}/api/v1/jobs/{job_id}",

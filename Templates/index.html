@@ -83,7 +83,7 @@ const AutoMLDashboard = () => {
               <input
                 type="password"
                 value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
+                onChange={(e)} => setApiKey(e.target.value)}
                 placeholder="Enter API Key"
                 className="w-full p-2 border rounded"
               />
@@ -103,7 +103,7 @@ const AutoMLDashboard = () => {
               <h2 className="text-2xl font-bold mb-4">Model Templates</h2>
               <select
                 value={selectedTemplate}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
+                onChange={(e)} => setSelectedTemplate(e.target.value)}
                 className="w-full p-2 border rounded"
               >
                 <option value="">Select a template</option>
@@ -122,8 +122,8 @@ const AutoMLDashboard = () => {
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{job.job_id}</span>
                       <span className={`px-2 py-1 rounded ${
-                        job.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        job.status === 'failed' ? 'bg-red-100 text-red-800' :
+                        job.status === 'completed'? 'bg-green-100 text-green-800' :
+                        job.status === 'failed' ? 'bg-red-100 text-red-800':
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {job.status}
