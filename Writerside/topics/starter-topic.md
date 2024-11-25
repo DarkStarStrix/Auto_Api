@@ -3,154 +3,269 @@
 ## File Structure Overview
 This file contains the core implementation of the AutoML system with four main parts:
 
-### 1. Utility Functions
-```python
-# Data conversion and preprocessing
-def _convert_to_dataset(data)
-def _prepare_data(data)
+## AutoML Framework: A Comprehensive Guide and Implementation
 
-# Test data generation
-def _generate_test_data(pl_module)
+The AutoML Framework provides streamlined machine learning automation by implementing a series of interconnected functions. Starting with data processing, we have `_convert_to_dataset(data)` which handles data conversion:
 
-# Model utilities
-def _get_activation(activation_name)
-```
-
-### 2. AutoML Class
-```python
-class AutoML:
-    """Main training interface"""
-    def __init__(self, config)
-    def _create_model(self)
-    def _prepare_data(data)
-    def fit(train_data, val_data)
-```
-
-### 3. Training Functions
-```python
-# Core training operations
-def _compute_loss(batch)
-def configure_optimizers()
-def training_step(batch, batch_idx)
-def validation_step(batch, batch_idx)
-```
-
-### 4. Callbacks
-```python
-class MetricsCallback:
-    """Training metrics logging"""
-    def __init__()
-    def on_train_epoch_start()
-    def on_train_epoch_end()
-```
-
-## Key Parts Breakdown
-
-1. **Data Processing Functions**
-   - Convert between numpy arrays and PyTorch tensors
-   - Handle data validation and preprocessing
-   - Generate test data for visualization
-   - Manage data loading and batching
-
-2. **Model Management**
-   - Dynamic model creation based on config
-   - Activation function handling
-   - Loss computation and optimization
-   - Training and validation steps
-
-3. **Training Pipeline**
-   - Optimizer configuration
-   - Learning rate scheduling
-   - Gradient handling
-   - Metrics logging
-   - Progress tracking
-
-4. **Metrics and Logging**
-   - Training loss tracking
-   - Validation loss monitoring
-   - Learning rate logging
-   - Epoch progress display
-
-## File Dependencies
-```
-Imports:
-├── pytorch_lightning as pl
-├── torch
-├── torch.utils.data
-├── torch.nn
-├── numpy as np
-├── pandas as pd
-└── matplotlib.pyplot
-```
-
-## Usage Flow
-```python
-# 1. Initialize with config
-auto_ml = AutoML(config)
-
-# 2. Prepare data
-train_data = ...
-val_data = ...
-
-# 3. Train model
-model = auto_ml.fit(train_data, val_data)
-```
-
-## Implementation Details {id="implementation-details_1"}
-
-1. **Data Handling**
 ```python
 def _convert_to_dataset(data):
-    # Converts raw data to PyTorch Dataset
+    """Convert raw data to PyTorch Dataset."""
     if isinstance(data, np.ndarray):
         data = torch.from_numpy(data)
-    ...
+    if isinstance(data, torch.Tensor):
+        features = data[:, :-1]
+        targets = data[:, -1]
+        return TensorDataset(features, targets)
 ```
 
-2. **Model Creation**
+This works alongside `_prepare_data(data)` for validation and preparation:
+
 ```python
-def _create_model(self):
-    model_type = self.config['model']['type']
-    if model_type == 'logistic_regression':
-        return LogisticRegressionModel(self.config)
-    ...
+def _prepare_data(data):
+    if isinstance(data, np.ndarray):
+        features = torch.FloatTensor(data[:, :-1])
+        targets = torch.FloatTensor(data[:, -1])
+        return TensorDataset(features, targets)
+    raise ValueError("Data must be numpy array")
 ```
 
-3. **Training Loop**
+The core functionality resides in the AutoML class:
+
 ```python
-def training_step(self, batch, batch_idx):
-    with autocast(enabled=self.use_amp):
-        loss = self._compute_loss(batch)
-    self.log('train_loss', loss, prog_bar=True)
-    ...
+class AutoML:
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.model = self._create_model()
+    
+    def _create_model(self):
+        model_type = self.config['model']['type']
+        if model_type == 'logistic_regression':
+            return LogisticRegressionModel(self.config)
+        elif model_type == 'linear_regression':
+            return LinearRegressionModel(self.config)
+        raise ValueError(f"Unsupported model type: {model_type}")
+
+    def fit(self, train_data, val_data=None):
+        train_dataset = self._prepare_data(train_data)
+        val_dataset = self._prepare_data(val_data) if val_data else None
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=self.config.get('batch_size', 32),
+            shuffle=True
+        )
+        trainer = pl.Trainer(
+            max_epochs=self.config.get('epochs', 10),
+            accelerator="auto",
+            devices="auto"
+        )
+        trainer.fit(self.model, train_loader, val_loader)
+        return self.model
 ```
 
-4. **Metrics Logging**
+Training operations are handled through specific functions:
+
 ```python
-def on_train_epoch_end(self, trainer, pl_module):
-    metrics = {
-        'Training Loss': f"{trainer.callback_metrics.get('train_loss', 0):.4f}",
-        'Validation Loss': f"{trainer.callback_metrics.get('val_loss', 0):.4f}",
-        ...
+def _compute_loss(self, batch):
+    features, targets = batch
+    outputs = self.model(features)
+    if self.config['model']['task'] == 'classification':
+        targets = targets.long()
+        loss = nn.CrossEntropyLoss()(outputs, targets)
+        with torch.no_grad():
+            predictions = outputs.argmax(dim=1)
+            accuracy = (predictions == targets).float().mean()
+            self.log('accuracy', accuracy, prog_bar=True)
+    else:
+        loss = nn.MSELoss()(outputs, targets)
+    return loss
+```
+
+Progress tracking and metrics are managed by the MetricsCallback:
+
+```python
+class MetricsCallback(Callback):
+    def __init__(self):
+        super().__init__()
+        self.epoch_metrics = {}
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        print(f"\nEpoch {trainer.current_epoch + 1}/{trainer.max_epochs}")
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        metrics = {
+            'Training Loss': f"{trainer.callback_metrics.get('train_loss', 0):.4f}",
+            'Validation Loss': f"{trainer.callback_metrics.get('val_loss', 0):.4f}",
+            'Learning Rate': f"{trainer.optimizers[0].param_groups[0]['lr']:.6f}"
+        }
+        print("\nEpoch Summary:")
+        for name, value in metrics.items():
+            print(f"{name}: {value}")
+```
+
+This system integrates all components into a seamless pipeline, handling everything from data preprocessing to model training and evaluation. Users can initialize the system with a configuration dictionary, feed in their data, and receive a trained model with comprehensive metrics tracking throughout the process. The framework supports both classification and regression tasks, with built-in error handling and progress monitoring.
+
+Usage is straightforward:
+```python
+config = {
+    "model": {
+        "type": "logistic_regression",
+        "input_dim": 10,
+        "output_dim": 2,
+        "task": "classification"
+    },
+    "training": {
+        "learning_rate": 0.001,
+        "epochs": 10
     }
+}
+
+automl = AutoML(config)
+model = automl.fit(train_data, val_data)
 ```
 
-## Performance Considerations
 
-1. **Memory Management**
-   - Batch processing
-   - Gradient accumulation
-   - Mixed precision training
+## File Dependencies
 
-2. **Optimization**
-   - Learning rate scheduling
-   - Early stopping
-   - Model checkpointing
+## AutoML Implementation: A Complete Guide
 
-3. **Monitoring**
-   - Progress bar updates
-   - Metric logging
-   - Training summaries
+The AutoML framework follows a straightforward three-step implementation process. Here's how it works with complete code examples:
+
+```python
+# Step 1: Configuration and Initialization
+config = {
+    "model": {
+        "type": "logistic_regression",
+        "input_dim": 10,
+        "output_dim": 2,
+        "task": "classification"
+    },
+    "training": {
+        "learning_rate": 0.001,
+        "epochs": 10,
+        "batch_size": 32,
+        "early_stopping": True
+    }
+}
+
+auto_ml = AutoML(config)
+```
+
+The framework handles data preparation with built-in conversion functions:
+
+```python
+def prepare_data():
+    # Load and preprocess your data
+    data = np.random.randn(1000, 11)  # Example data
+    train_size = int(0.8 * len(data))
+    
+    train_data = data[:train_size]
+    val_data = data[train_size:]
+    
+    # Convert to PyTorch format
+    def convert_to_dataset(data):
+        if isinstance(data, np.ndarray):
+            data = torch.from_numpy(data).float()
+        features = data[:, :-1]
+        targets = data[:, -1]
+        return TensorDataset(features, targets)
+    
+    return convert_to_dataset(train_data), convert_to_dataset(val_data)
+
+# Get your data ready
+train_data, val_data = prepare_data()
+```
+
+Model training and monitoring are handled through the comprehensive training loop:
+
+```python
+class AutoMLTrainer:
+    def fit(self, train_data, val_data):
+        # Setup training
+        train_loader = DataLoader(
+            train_data,
+            batch_size=self.config["training"]["batch_size"],
+            shuffle=True
+        )
+        
+        val_loader = DataLoader(val_data, batch_size=self.config["training"]["batch_size"])
+        
+        # Training loop with metrics
+        def training_step(self, batch, batch_idx):
+            with autocast(enabled=self.use_amp):
+                features, targets = batch
+                outputs = self.model(features)
+                loss = self._compute_loss(outputs, targets)
+                
+                # Log metrics
+                self.log('train_loss', loss)
+                if self.config["model"]["task"] == "classification":
+                    accuracy = (outputs.argmax(dim=1) == targets).float().mean()
+                    self.log('train_accuracy', accuracy)
+            
+            return loss
+        
+        # Setup trainer with callbacks
+        trainer = pl.Trainer(
+            max_epochs=self.config["training"]["epochs"],
+            callbacks=[MetricsCallback()],
+            enable_progress_bar=True
+        )
+        
+        # Start training
+        trainer.fit(self.model, train_loader, val_loader)
+        return self.model
+
+# Create metrics callback for monitoring
+class MetricsCallback(Callback):
+    def __init__(self):
+        self.metrics = {}
+    
+    def on_train_epoch_end(self, trainer, pl_module):
+        metrics = {
+            'Training Loss': f"{trainer.callback_metrics.get('train_loss', 0):.4f}",
+            'Validation Loss': f"{trainer.callback_metrics.get('val_loss', 0):.4f}",
+            'Learning Rate': f"{trainer.optimizers[0].param_groups[0]['lr']:.6f}"
+        }
+        
+        print("\nEpoch Summary:")
+        for name, value in metrics.items():
+            print(f"{name}: {value}")
+```
+
+Finally, train your model:
+
+```python
+# Train the model
+model = auto_ml.fit(train_data, val_data)
+
+# Get predictions
+with torch.no_grad():
+    predictions = model(test_features)
+```
+
+This implementation provides:
+- Automated data handling and conversion
+- Dynamic model creation based on configuration
+- Comprehensive training loop with metrics tracking
+- Built-in validation and error handling
+- Progress monitoring and reporting
+
+The system can be extended with custom models:
+
+```python
+class CustomModel(BaseModel):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.layers = nn.Sequential(
+            nn.Linear(config["model"]["input_dim"], 64),
+            nn.ReLU(),
+            nn.Linear(64, config["model"]["output_dim"])
+        )
+    
+    def forward(self, x):
+        return self.layers(x)
+```
 
 ## BaseModel Documentation
 

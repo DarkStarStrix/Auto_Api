@@ -9,7 +9,12 @@
             <noindex-content>true</noindex-content>
         </variables>
     </build-profile>
-    <build-profile instance="htu">
+    <build-profile instance="mp">
+        <variables>
+            <noindex-content>true</noindex-content>
+        </variables>
+    </build-profile>
+    <build-profile instance="ad">
         <variables>
             <noindex-content>true</noindex-content>
         </variables>

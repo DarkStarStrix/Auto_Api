@@ -1,65 +1,4 @@
-# About How to use
-
-
-## Quick Start
-1. Install the package:
-```bash
-pip install automl-pipeline
-```
-
-2. Basic usage with API:
-```python
-import requests
-
-# API endpoint
-url = "http://localhost:8000/api/train"
-
-# Configuration
-config = {
-    "model": {
-        "type": "classification",
-        "input_dim": 10,
-        "output_dim": 5,
-        "task": "classification"
-    },
-    "training": {
-        "learning_rate": 0.002,
-        "epochs": 30
-    },
-    "data": {
-        "batch_size": 32
-    }
-}
-
-# Send training request
-response = requests.post(url, json=config)
-print(response.json())
-```
-
-## Local Development Usage
-```python
-from lightning_auto import AutoML
-from config import get_classification_config
-import torch
-
-# Get configuration
-config = get_classification_config()
-
-# Create example data
-train_features = torch.randn(1000, config["model"]["input_dim"])
-train_labels = torch.randint(0, config["model"]["output_dim"], (1000,))
-
-# Create data loaders
-train_data = torch.utils.data.DataLoader(
-    torch.utils.data.TensorDataset(train_features, train_labels),
-    batch_size=config["data"]["batch_size"],
-    shuffle=True
-)
-
-# Initialize and train
-auto_ml = AutoML(config)
-auto_ml.fit(train_data)
-```
+# Results For model Training
 
 ## Understanding the Results
 After training, you'll get several visualizations:
@@ -149,15 +88,6 @@ def get_high_performance_config():
     }
 ```
 
-## API Endpoints
-
-### Training Endpoint
-```bash
-curl -X POST http://localhost:8000/api/train \
-     -H "Content-Type: application/json" \
-     -d @config.json
-```
-
 ### Configuration File (config.json)
 ```json
 {
@@ -235,6 +165,6 @@ new_auto_ml.model.load_state_dict(torch.load("model.pt"))
    - Poor accuracy → Increase model capacity
 
 ## Getting Help
-- Documentation: [docs.automl.dev](http://docs.automl.dev)
-- Issues: [GitHub Issues](https://github.com/your-repo/issues)
-- Discussions: [GitHub Discussions](https://github.com/your-repo/discussions)
+- Issues: [GitHub Issues](https://github.com/DarkStarStrix/Auto_Api/issues)
+- Discussions: [GitHub Discussions](https://github.com/DarkStarStrix/Auto_Api/discussions)
+- API Usage Docs 

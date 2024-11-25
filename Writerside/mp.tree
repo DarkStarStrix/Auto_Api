@@ -2,10 +2,11 @@
 <!DOCTYPE instance-profile
         SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
 
-<instance-profile id="htu"
-                 name="How to use "
-                 start-page="how-to-use.md">
+<instance-profile id="mp"
+                 name="Model Performance"
+                 start-page="Model_Performance.md">
 
-    <toc-element topic="how-to-use.md"/>
+    <toc-element topic="Model_Performance.md"/>
     <toc-element topic="starter-topic.md"/>
+    <toc-element topic="automl-api-docs.md"/>
 </instance-profile>

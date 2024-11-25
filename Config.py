@@ -148,6 +148,97 @@ def get_logistic_regression_config():
     }
 
 
+def refined_get_logistic_regression_config(
+        learning_rate=0.001,
+        batch_size=32,
+        epochs=50,
+        optimizer_type="adam",
+        scheduler_type="cosine",
+        enable_hyperparameter_tuning=False,
+        enable_quantization=False
+):
+    """Get logistic regression configuration with optimization options."""
+    return {
+        "model": {
+            "type": "logistic_regression",
+            "input_dim": 10,
+            "output_dim": 1,
+            "task": "binary_classification"
+        },
+        "training": {
+            "epochs": epochs,
+            "batch_size": batch_size,
+            "learning_rate": learning_rate,
+            "early_stopping": True,
+            "patience": 5,
+            "validation_split": 0.2,
+            "gradient_clip_val": 1.0,
+            "visualization": True,
+            "metrics": ["accuracy", "precision", "recall", "f1"]
+        },
+        "optimization": {
+            "optimizer": {
+                "type": optimizer_type,
+                "betas": (0.9, 0.999) if optimizer_type == "adam" else None,
+                "epsilon": 1e-8,
+                "weight_decay": 0.01,
+            },
+            "scheduler": {
+                "type": scheduler_type,
+                "min_lr": 1e-6,
+                "warmup_epochs": 3
+            },
+            "mixed_precision": True,
+            "gradient_clip": True,
+            "gradient_clip_val": 1.0,
+            "gradient_accumulation_steps": 1,
+            "hyperparameter_tuning": {
+                "enabled": enable_hyperparameter_tuning,
+                "n_trials": 20,
+                "search_space": {
+                    "learning_rate": (1e-5, 1e-1),
+                    "batch_size": (16, 128),
+                    "optimizer": ["adam", "sgd", "adamw"],
+                    "weight_decay": (1e-5, 1e-2)
+                },
+                "optimization_metric": "val_loss"
+            },
+            "quantization": {
+                "enabled": enable_quantization,
+                "dtype": "qint8",
+                "modules_to_quantize": ["Linear"],
+                "calibration_method": "histogram",
+                "reduce_range": True,
+                "backend": "fbgemm"
+            },
+        },
+        "data": {
+            "batch_size": batch_size,
+            "num_workers": 4,
+            "pin_memory": True,
+            "prefetch_factor": 2,
+            "persistent_workers": True,
+            "preprocessing": {
+                "normalize": True,
+                "handle_missing": "mean",
+                "handle_categorical": "one_hot"
+            }
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_every_n_steps": 10,
+            "save_dir": "logs/logistic_regression",
+            "metrics": ["accuracy", "f1", "precision", "recall"],
+            "save_visualization": True
+        },
+        "hyperparameters": {
+            "weight_initialization": "xavier_uniform",
+            "dropout_rate": 0.0,
+            "bias_init": 0.0
+        }
+    }
+
+
 def get_transformer_config():
     """Configuration for transformer models."""
     return {

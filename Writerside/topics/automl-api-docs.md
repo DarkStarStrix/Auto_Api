@@ -223,6 +223,5 @@ print(status.get('error'))
 
 ## Support
 
-- GitHub Issues: [Report a bug](https://github.com/your-repo/automl-api/issues)
-- Documentation: [Full documentation](https://your-repo.github.io/automl-api)
-- Community: [Join our Discord](https://discord.gg/your-server)
+- GitHub Issues: [Report a bug](https://github.com/DarkStarStrix/Auto_Api/issues)
+- Documentation: [Full documentation](https://github.com/DarkStarStrix/Auto_Api/tree/master/Writerside)

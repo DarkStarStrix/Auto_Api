@@ -1,16 +1,13 @@
 # visualization.py
-
 import os
-from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from pytorch_lightning.callbacks import Callback
-from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 
 class LogisticRegressionVisualizer (Callback):
-    """Enhanced visualization callback for logistic regression."""
+    """Visualization callback for logistic regression."""
 
     def __init__(self, log_dir: str = "training_plots/logistic_regression"):
         super ().__init__ ()
@@ -22,13 +19,11 @@ class LogisticRegressionVisualizer (Callback):
         self.accuracies = []
         self.precisions = []
         self.recalls = []
-        self.f1_scores = []
         self.training_losses = []
         self.validation_losses = []
 
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
-        """Collect predictions and actual values.
-        """
+        """Collect predictions and actual values."""
         x, y = batch
         with torch.no_grad ():
             probs = pl_module (x)
@@ -51,9 +46,8 @@ class LogisticRegressionVisualizer (Callback):
 
         # Create plots
         self._plot_metrics_over_time ()
-        self._plot_roc_curve ()
-        self._plot_confusion_matrix ()
         self._plot_probability_distribution ()
+        self._plot_custom_confusion_matrix ()
 
         # Clear batch data
         self.predictions = []
@@ -61,7 +55,7 @@ class LogisticRegressionVisualizer (Callback):
         self.probabilities = []
 
     def _plot_metrics_over_time(self):
-        """Plot accuracy, precision, recall, and F1 score over time."""
+        """Plot accuracy, precision, and recall over time."""
         plt.figure (figsize=(12, 6))
         epochs = range (1, len (self.accuracies) + 1)
 
@@ -77,52 +71,6 @@ class LogisticRegressionVisualizer (Callback):
         plt.savefig (os.path.join (self.log_dir, 'metrics_over_time.png'))
         plt.close ()
 
-    def _plot_roc_curve(self):
-        """Plot ROC curve and calculate AUC."""
-        if len (self.actuals) > 0:
-            fpr, tpr, _ = roc_curve (self.actuals, self.probabilities)
-            roc_auc = auc (fpr, tpr)
-
-            plt.figure (figsize=(8, 8))
-            plt.plot (fpr, tpr, 'b-', label=f'ROC curve (AUC = {roc_auc:.2f})')
-            plt.plot ([0, 1], [0, 1], 'k--')
-            plt.xlim ([0.0, 1.0])
-            plt.ylim ([0.0, 1.05])
-            plt.xlabel ('False Positive Rate')
-            plt.ylabel ('True Positive Rate')
-            plt.title ('Receiver Operating Characteristic (ROC)')
-            plt.legend (loc="lower right")
-            plt.grid (True)
-            plt.savefig (os.path.join (self.log_dir, 'roc_curve.png'))
-            plt.close ()
-
-    def _plot_confusion_matrix(self):
-        """Plot confusion matrix heatmap."""
-        if len (self.actuals) > 0:
-            cm = confusion_matrix (self.actuals, self.predictions)
-            plt.figure (figsize=(8, 6))
-            plt.imshow (cm, interpolation='nearest', cmap='Blues')
-            plt.title ('Confusion Matrix')
-            plt.colorbar ()
-
-            classes = ['Negative', 'Positive']
-            tick_marks = np.arange (len (classes))
-            plt.xticks (tick_marks, classes)
-            plt.yticks (tick_marks, classes)
-
-            # Add text annotations to the matrix
-            for i in range (cm.shape [0]):
-                for j in range (cm.shape [1]):
-                    plt.text (j, i, str (cm [i, j]),
-                              horizontalalignment="center",
-                              color="white" if cm [i, j] > cm.max () / 2 else "black")
-
-            plt.xlabel ('Predicted label')
-            plt.ylabel ('True label')
-            plt.tight_layout ()
-            plt.savefig (os.path.join (self.log_dir, 'confusion_matrix.png'))
-            plt.close ()
-
     def _plot_probability_distribution(self):
         """Plot distribution of predicted probabilities."""
         if len (self.probabilities) > 0:
@@ -135,9 +83,46 @@ class LogisticRegressionVisualizer (Callback):
             plt.savefig (os.path.join (self.log_dir, 'probability_distribution.png'))
             plt.close ()
 
+    def _plot_custom_confusion_matrix(self):
+        """Plot simplified confusion matrix."""
+        if len (self.actuals) > 0:
+            # Calculate confusion matrix manually
+            predictions = np.array (self.predictions)
+            actuals = np.array (self.actuals)
+
+            tp = np.sum ((predictions == 1) & (actuals == 1))
+            tn = np.sum ((predictions == 0) & (actuals == 0))
+            fp = np.sum ((predictions == 1) & (actuals == 0))
+            fn = np.sum ((predictions == 0) & (actuals == 1))
+
+            cm = np.array ([[tn, fp], [fn, tp]])
+
+            plt.figure (figsize=(8, 6))
+            plt.imshow (cm, interpolation='nearest', cmap='Blues')
+            plt.title ('Confusion Matrix')
+            plt.colorbar ()
+
+            classes = ['Negative', 'Positive']
+            tick_marks = np.arange (len (classes))
+            plt.xticks (tick_marks, classes)
+            plt.yticks (tick_marks, classes)
+
+            # Add text annotations
+            for i in range (2):
+                for j in range (2):
+                    plt.text (j, i, str (cm [i, j]),
+                              horizontalalignment="center",
+                              color="white" if cm [i, j] > cm.max () / 2 else "black")
+
+            plt.xlabel ('Predicted label')
+            plt.ylabel ('True label')
+            plt.tight_layout ()
+            plt.savefig (os.path.join (self.log_dir, 'confusion_matrix.png'))
+            plt.close ()
+
 
 class LinearRegressionVisualizer (Callback):
-    """Enhanced visualization callback for linear regression."""
+    """Visualization callback for linear regression."""
 
     def __init__(self, log_dir: str = "training_plots/linear_regression"):
         super ().__init__ ()
@@ -152,8 +137,7 @@ class LinearRegressionVisualizer (Callback):
         self.residuals = []
 
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
-        """Collect predictions and actual values.
-        """
+        """Collect predictions and actual values."""
         x, y = batch
         with torch.no_grad ():
             preds = pl_module (x)
@@ -185,24 +169,22 @@ class LinearRegressionVisualizer (Callback):
 
     def _plot_metrics_over_time(self):
         """Plot MSE and R² score over time."""
-        plt.figure (figsize=(12, 6))
+        plt.figure (figsize=(15, 5))
         epochs = range (1, len (self.mse_scores) + 1)
 
-        fig, (ax1, ax2) = plt.subplots (1, 2, figsize=(15, 5))
+        plt.subplot (1, 2, 1)
+        plt.plot (epochs, self.mse_scores, 'r-')
+        plt.title ('Mean Squared Error Over Time')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('MSE')
+        plt.grid (True)
 
-        # Plot MSE
-        ax1.plot (epochs, self.mse_scores, 'r-')
-        ax1.set_title ('Mean Squared Error Over Time')
-        ax1.set_xlabel ('Epoch')
-        ax1.set_ylabel ('MSE')
-        ax1.grid (True)
-
-        # Plot R²
-        ax2.plot (epochs, self.r2_scores, 'b-')
-        ax2.set_title ('R² Score Over Time')
-        ax2.set_xlabel ('Epoch')
-        ax2.set_ylabel ('R²')
-        ax2.grid (True)
+        plt.subplot (1, 2, 2)
+        plt.plot (epochs, self.r2_scores, 'b-')
+        plt.title ('R² Score Over Time')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('R²')
+        plt.grid (True)
 
         plt.tight_layout ()
         plt.savefig (os.path.join (self.log_dir, 'metrics_over_time.png'))
@@ -227,7 +209,6 @@ class LinearRegressionVisualizer (Callback):
             plt.figure (figsize=(10, 6))
             plt.scatter (self.actuals, self.predictions, alpha=0.5)
 
-            # Add perfect prediction line
             min_val = min (min (self.actuals), min (self.predictions))
             max_val = max (max (self.actuals), max (self.predictions))
             plt.plot ([min_val, max_val], [min_val, max_val], 'r--')
