@@ -7,9 +7,6 @@ import pytorch_lightning as pl
 from Model_Types import LinearRegressionModel, LogisticRegressionModel
 import os
 import gc
-from Optimization_Suite import quantize_dynamic
-from Optimization_Suite import quantize_model
-from Optimization_Suite import ModelOptimizer
 
 
 def create_model(config: Dict [str, Any]):

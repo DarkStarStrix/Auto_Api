@@ -3,6 +3,78 @@
 ## Understanding the Results
 After training, you'll get several visualizations:
 
+## Linear Regression
+
+## Performance Metrics
+- Final R² Score: 0.85
+- MSE Range: 8.5 → 1.5
+- RMSE: 1.22
+- MAE: 0.94
+
+## Training Progress and Visualization 
+![metrics_over_time.png](../../training_plots/linear_regression/metrics_over_time.png)
+```markdown
+Description: Shows steady decline from 8.5 to 1.5 over 8 epochs
+Key Points: Smooth convergence, no oscillation
+[R² Score Progress Plot]
+Description: Demonstrates improvement from 0.1 to 0.85
+Key Points: Steady growth, plateaus near end
+```
+
+## Prediction Analysis
+![predictions_vs_actual.png](../../training_plots/linear_regression/predictions_vs_actual.png)
+```markdown
+[Predictions vs Actuals Plot]
+Correlation: 0.92
+RMSE: 1.22
+Points: 100
+Distribution: Normal
+```
+
+## Residual Analysis
+![residual_distribution.png](../../training_plots/linear_regression/residual_distribution.png)
+```markdown
+[Residual Distribution Plot]
+Mean: 0.02
+Std Dev: 0.98
+Skewness: 0.15
+```
+
+![residuals.png](../../training_plots/linear_regression/residuals.png)
+```markdown
+[Residual vs Predicted Plot]
+Pattern: Slight heteroscedasticity
+Range: [-2, 2]
+```
+
+## Model Parameters
+```python
+final_parameters = {
+    "weights": "shape=(10, 1)",
+    "bias": 0.023,
+    "learning_rate": 0.001,
+    "iterations": 8
+}
+```
+
+## Recommendations
+```python
+optimization_suggestions = {
+    "epochs": 15,
+    "regularization": 0.01,
+    "feature_scaling": "standard",
+    "batch_size": 32
+}
+```
+
+## Future Work
+- Feature importance analysis
+- Cross-validation results
+- Learning rate tuning
+- Regularization experiments
+
+## Logistic regression 
+
 ### 1. Class Distribution
 ![class_distribution.png](..%2F..%2Ftraining_plots%2Fclass_distribution.png)
 ```python
