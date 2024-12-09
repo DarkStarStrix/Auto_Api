@@ -36,7 +36,7 @@ setup (
         "pydantic==1.10.18",
         "python-jose==3.3.0",
         "python-dotenv==1.0.0",
-        "PyJWT==2.10.0",
+        "PyJWT==2.10.1",
 
         # ML Tools
         "scikit-learn==1.3.0",
