@@ -1,0 +1,26 @@
+logging:
+  log_interval: 10
+  metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  tensorboard: true
+model:
+  input_dim: 10
+  output_dim: 3
+  priors: null
+  task: classification
+  type: naive_bayes
+  var_smoothing: 1.0e-09
+preprocessing:
+  feature_selection: null
+  handle_missing: mean
+  scaling: standard
+training:
+  batch_size: 32
+  early_stopping: true
+  epochs: 10
+  learning_rate: 0.001
+  patience: 5
+  validation_split: 0.2
