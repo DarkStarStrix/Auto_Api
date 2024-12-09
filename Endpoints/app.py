@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 import jwt
 import uuid
-from Config import (
+from Model_Library import (
     get_linear_config,
     get_logistic_regression_config,
     get_transformer_config,

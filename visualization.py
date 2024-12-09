@@ -231,3 +231,163 @@ class LinearRegressionVisualizer (Callback):
             plt.grid (True)
             plt.savefig (os.path.join (self.log_dir, 'residual_distribution.png'))
             plt.close ()
+
+
+class NaiveBayesVisualizer (Callback):
+    def __init__(self, log_dir: str = "training_plots/naive_bayes"):
+        super ().__init__ ()
+        self.log_dir = log_dir
+        os.makedirs (log_dir, exist_ok=True)
+        self.predictions = []
+        self.actuals = []
+        self.class_probabilities = []
+        self.accuracies = []
+        self.class_wise_precision = []
+        self.class_wise_recall = []
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        x, y = batch
+        with torch.no_grad ():
+            probs = pl_module (x)
+            preds = torch.argmax (probs, dim=1)
+
+            self.predictions.extend (preds.cpu ().numpy ())
+            self.actuals.extend (y.cpu ().numpy ())
+            self.class_probabilities.extend (probs.cpu ().numpy ())
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        metrics = trainer.callback_metrics
+
+        self.accuracies.append (metrics.get ('accuracy', 0).item ())
+        self.class_wise_precision.append (metrics.get ('precision', 0))
+        self.class_wise_recall.append (metrics.get ('recall', 0))
+
+        self._plot_metrics_over_time ()
+        self._plot_class_probability_distributions ()
+        self._plot_confusion_matrix ()
+
+        self.predictions = []
+        self.actuals = []
+        self.class_probabilities = []
+
+    def _plot_metrics_over_time(self):
+        plt.figure (figsize=(10, 6))
+        epochs = range (1, len (self.accuracies) + 1)
+        plt.plot (epochs, self.accuracies, 'b-', label='Accuracy')
+
+        plt.title ('Model Performance Over Time')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Score')
+        plt.legend ()
+        plt.grid (True)
+        plt.savefig (os.path.join (self.log_dir, 'metrics_over_time.png'))
+        plt.close ()
+
+    def _plot_class_probability_distributions(self):
+        if len (self.class_probabilities) > 0:
+            probs = np.array (self.class_probabilities)
+            n_classes = probs.shape [1]
+
+            plt.figure (figsize=(12, 6))
+            for i in range (n_classes):
+                plt.hist (probs [:, i], bins=30, alpha=0.5, label=f'Class {i}')
+
+            plt.title ('Class Probability Distributions')
+            plt.xlabel ('Predicted Probability')
+            plt.ylabel ('Count')
+            plt.legend ()
+            plt.grid (True)
+            plt.savefig (os.path.join (self.log_dir, 'probability_distributions.png'))
+            plt.close ()
+
+    def _plot_confusion_matrix(self):
+        if len (self.actuals) > 0:
+            cm = confusion_matrix (self.actuals, self.predictions)
+            plt.figure (figsize=(10, 8))
+            sns.heatmap (cm, annot=True, fmt='d', cmap='Blues')
+            plt.title ('Confusion Matrix')
+            plt.xlabel ('Predicted Label')
+            plt.ylabel ('True Label')
+            plt.savefig (os.path.join (self.log_dir, 'confusion_matrix.png'))
+            plt.close ()
+
+
+class DecisionTreeVisualizer (Callback):
+    def __init__(self, log_dir: str = "training_plots/decision_tree"):
+        super ().__init__ ()
+        self.log_dir = log_dir
+        os.makedirs (log_dir, exist_ok=True)
+        self.predictions = []
+        self.actuals = []
+        self.accuracies = []
+        self.feature_importances = []
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        x, y = batch
+        with torch.no_grad ():
+            preds = pl_module (x)
+            preds = torch.argmax (preds, dim=1)
+            self.predictions.extend (preds.cpu ().numpy ())
+            self.actuals.extend (y.cpu ().numpy ())
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        metrics = trainer.callback_metrics
+        self.accuracies.append (metrics.get ('accuracy', 0).item ())
+
+        if pl_module.feature_importance is not None:
+            self.feature_importances.append (pl_module.feature_importance.cpu ().numpy ())
+
+        self._plot_accuracy_curve ()
+        self._plot_feature_importance ()
+        self._plot_decision_boundaries (trainer, pl_module)
+
+        self.predictions = []
+        self.actuals = []
+
+    def _plot_accuracy_curve(self):
+        plt.figure (figsize=(10, 6))
+        epochs = range (1, len (self.accuracies) + 1)
+        plt.plot (epochs, self.accuracies, 'g-')
+        plt.title ('Decision Tree Accuracy Over Time')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Accuracy')
+        plt.grid (True)
+        plt.savefig (os.path.join (self.log_dir, 'accuracy_curve.png'))
+        plt.close ()
+
+    def _plot_feature_importance(self):
+        if self.feature_importances:
+            plt.figure (figsize=(12, 6))
+            latest_importance = self.feature_importances [-1]
+            indices = np.argsort (latest_importance) [::-1]
+
+            plt.bar (range (len (latest_importance)), latest_importance [indices])
+            plt.title ('Feature Importance')
+            plt.xlabel ('Feature Index')
+            plt.ylabel ('Importance Score')
+            plt.tight_layout ()
+            plt.savefig (os.path.join (self.log_dir, 'feature_importance.png'))
+            plt.close ()
+
+    def _plot_decision_boundaries(self, trainer, pl_module):
+        if pl_module.n_features == 2:
+            x_min, x_max = -3, 3
+            y_min, y_max = -3, 3
+            xx, yy = np.meshgrid (np.linspace (x_min, x_max, 100),
+                                  np.linspace (y_min, y_max, 100))
+
+            X_grid = torch.FloatTensor (np.c_ [xx.ravel (), yy.ravel ()]).to (pl_module.device)
+            with torch.no_grad ():
+                Z = pl_module (X_grid)
+                Z = torch.argmax (Z, dim=1).cpu ().numpy ()
+
+            Z = Z.reshape (xx.shape)
+
+            plt.figure (figsize=(10, 8))
+            plt.contourf (xx, yy, Z, alpha=0.4, cmap='viridis')
+            plt.title ('Decision Boundaries')
+            plt.xlabel ('Feature 1')
+            plt.ylabel ('Feature 2')
+            plt.colorbar ()
+            plt.savefig (os.path.join (self.log_dir, 'decision_boundaries.png'))
+            plt.close ()

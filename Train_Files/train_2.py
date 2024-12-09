@@ -2,7 +2,7 @@
 
 import torch.utils.data as data
 import numpy as np
-from Config import get_logistic_regression_config
+from Model_Library import get_logistic_regression_config
 from typing import Dict, Any
 import torch
 import pytorch_lightning as pl
@@ -54,7 +54,7 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
         dataloader_kwargs = {
             'batch_size': config ['training'].get ('batch_size', 32),
             'num_workers': 0,  # Set to 0 to avoid multiprocessing issues
-            'pin_memory': False,  # Set to False to reduce memory usage
+            'pin_memory': False,  # Set too False to reduce memory usage
             'persistent_workers': False,  # Set to False as we're not using workers
         }
 

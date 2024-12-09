@@ -4,7 +4,7 @@ Users can copy and modify this file for their use case.
 """
 
 from lightning_auto import AutoML
-from Config import get_linear_config
+from Model_Library import get_linear_config
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 

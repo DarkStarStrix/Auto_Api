@@ -1,6 +1,6 @@
 import torch.utils.data as data
 import numpy as np
-from Config import get_linear_regression_config
+from Model_Library import get_linear_regression_config
 from typing import Dict, Any
 import torch
 import pytorch_lightning as pl

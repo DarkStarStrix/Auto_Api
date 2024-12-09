@@ -7,5 +7,7 @@
                  start-page="automl-api-docs.md">
 
     <toc-element topic="automl-api-docs.md"/>
+    <toc-element topic="Model_Performance.topic"/>
+    <toc-element topic="How_It_works.md"/>
     <toc-element topic="Model_Performance.md"/>
 </instance-profile>

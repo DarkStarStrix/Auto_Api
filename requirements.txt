@@ -1,4 +1,4 @@
-torch~=2.2.0
+torch~=2.1.1
 pytorch-lightning~=2.1.1
 transformers==4.45.2
 numpy==1.24.4
@@ -20,3 +20,6 @@ optuna~=4.1.0
 config~=0.5.1
 PyJWT~=2.10.0
 prometheus-client~=0.21.0
+ploty~=5.24.1
+scipy~=1.13.1
+neptune~=2.0.0a9

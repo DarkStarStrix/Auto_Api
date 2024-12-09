@@ -22,31 +22,38 @@ setup (
     python_requires=">=3.9",
     install_requires=[
         # Core ML
-        "torch>=2.4.1",
-        "pytorch-lightning>=2.4.0",
-        "transformers>=4.45.2",
-        "numpy>=1.24.4",
-        "pandas>=1.5.3",
+        "torch==2.1.1",
+        "pytorch-lightning==2.1.1",
+        "transformers==4.45.2",
+        "numpy==1.24.4",
+        "pandas==2.0.3",
+        "scipy==1.13.1",
 
         # API and Web
-        "fastapi>=0.109.1",
-        "uvicorn>=0.15.0",
-        "requests>=2.31.0",
-        "pydantic>=1.10.18",
-        "python-jose>=3.3.0",
-        "python-dotenv>=1.0.0",
+        "fastapi==0.109.1",
+        "uvicorn==0.15.0",
+        "requests==2.31.0",
+        "pydantic==1.10.18",
+        "python-jose==3.3.0",
+        "python-dotenv==1.0.0",
+        "PyJWT==2.10.0",
 
         # ML Tools
-        "scikit-learn>=1.3.2",
-        "seaborn>=0.11.2",
-        "matplotlib>=3.7.1",
-        "feature-engine>=1.0.0",
-        "optuna>=2.10.0",
-        "tensorboard>=2.12.0",
+        "scikit-learn==1.3.0",
+        "seaborn==0.11.2",
+        "matplotlib==3.7.1",
+        "optuna==4.1.0",
+        "config==0.5.1",
+        "plotly==5.24.1",
+
+        # Monitoring and Logging
+        "prometheus-client==0.21.0",
+        "rich==13.9.0",
+        "click==8.1.7",
     ],
     extras_require={
         "dev": [
-            "pytest>=7.4.3",
+            "pytest==7.4.3",
             "black>=22.0",
             "isort>=5.0",
             "flake8>=6.0.0",

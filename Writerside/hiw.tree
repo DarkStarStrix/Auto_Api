@@ -4,8 +4,8 @@
 
 <instance-profile id="hiw"
                  name="How it works"
-                 start-page="starter-topic.md">
+                 start-page="How_It_works.md">
 
-    <toc-element topic="starter-topic.md"/>
-    <toc-element topic="Model_Performance.md"/>
+    <toc-element topic="How_It_works.md"/>
+    <toc-element topic="Model_Performance.topic"/>
 </instance-profile>

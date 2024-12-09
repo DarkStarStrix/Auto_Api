@@ -4,9 +4,9 @@
 
 <instance-profile id="mp"
                  name="Model Performance"
-                 start-page="Model_Performance.md">
+                 start-page="Model_Performance.topic">
 
-    <toc-element topic="Model_Performance.md"/>
-    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="Model_Performance.topic"/>
+    <toc-element topic="How_It_works.md"/>
     <toc-element topic="automl-api-docs.md"/>
 </instance-profile>

@@ -12,7 +12,7 @@ After training, you'll get several visualizations:
 - MAE: 0.94
 
 ## Training Progress and Visualization 
-![metrics_over_time.png](../../training_plots/linear_regression/metrics_over_time.png)
+![metrics_over_time.png](../../Training_plots/linear_regression/metrics_over_time.png)
 ```markdown
 Description: Shows steady decline from 8.5 to 1.5 over 8 epochs
 Key Points: Smooth convergence, no oscillation
@@ -22,7 +22,7 @@ Key Points: Steady growth, plateaus near end
 ```
 
 ## Prediction Analysis
-![predictions_vs_actual.png](../../training_plots/linear_regression/predictions_vs_actual.png)
+![predictions_vs_actual.png](../../Training_plots/linear_regression/predictions_vs_actual.png)
 ```markdown
 [Predictions vs Actuals Plot]
 Correlation: 0.92
@@ -32,7 +32,7 @@ Distribution: Normal
 ```
 
 ## Residual Analysis
-![residual_distribution.png](../../training_plots/linear_regression/residual_distribution.png)
+![residual_distribution.png](../../Training_plots/linear_regression/residual_distribution.png)
 ```markdown
 [Residual Distribution Plot]
 Mean: 0.02
@@ -40,7 +40,7 @@ Std Dev: 0.98
 Skewness: 0.15
 ```
 
-![residuals.png](../../training_plots/linear_regression/residuals.png)
+![residuals.png](../../Training_plots/linear_regression/residuals.png)
 ```markdown
 [Residual vs Predicted Plot]
 Pattern: Slight heteroscedasticity
@@ -215,6 +215,78 @@ Training Loss: 1.6422
 Validation Loss: 1.6169
 Learning Rate: 0.000896
 ```
+
+## Naive Bayes Model Performance Analysis
+
+## Classification Performance
+
+### Confusion Matrix Analysis
+- Three balanced classes with moderate cross-class confusion
+- Class 2: Best self-prediction (16 correct)
+- Common mis-classification range: 8-12 samples
+- Uniform mis-classification pattern across classes
+
+![class_performance.png](../../Training_plots/naive_bayes/class_performance.png)
+![confusion_matrix.png](../../Training_plots/naive_bayes/confusion_matrix.png)
+
+### Probability Distribution Patterns
+- **Class 0**: Right-skewed distribution, peaking ~0.35
+- **Class 1**: Bimodal distribution, peaks at 0.325 and 0.350
+- **Class 2**: Approximately normal, centered at 0.33
+
+![class_probability_distributions.png](../../Training_plots/naive_bayes/class_probability_distributions.png)
+
+### Precision & Recall
+| Metric    | Best            | Worst           |
+|-----------|-----------------|-----------------|
+| Precision | Class 2 (0.381) | Class 0 (0.223) |
+| Recall    | Class 1 (0.360) | Class 0 (0.280) |
+
+### Training Dynamics
+- Training loss: Unstable with epoch 8 spike
+- Validation loss: Upward trend suggests overfitting
+- Class 2: Consistent precision leader
+- Recall: Initial volatility followed by stabilization
+
+![metrics_over_time.png](../../Training_plots/naive_bayes/metrics_over_time.png)
+
+## Recommendations {id="recommendations_1"}
+
+1. Overfitting Mitigation
+   - Implement regularization
+   - Review model complexity
+
+2. Performance Enhancement
+   - Feature engineering focus
+   - Hyperparameter optimization (variance smoothing)
+   - Class balance assessment
+
+## Decision Tree Model Training Results
+
+## Accuracy Performance
+- Initial: 0.380
+- Peak: 0.390 (epochs 3-8) 
+- Final: 0.380
+
+![accuracy_curve.png](../../Training_plots/decision_tree/accuracy_curve.png)
+
+## Feature Importance
+- Most influential: Feature 0 (0.12)
+- Least influential: Feature 9 (0.07)
+- Clear importance gradient from features 0-9
+
+![feature_importance.png](../../Training_plots/decision_tree/feature_importance.png)
+
+## Key Observations
+- 1% accuracy improvement during training
+- Plateau during middle epochs
+- Sharp performance drop at epoch 8
+- Top 4 features show significantly higher importance
+
+## Recommendations {id="recommendations_2"}
+- Implement early stopping (epoch 3)
+- Consider feature selection focusing on top 4
+- Investigate late-stage accuracy decline
 
 ## Saving and Loading Models
 

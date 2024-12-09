@@ -40,7 +40,7 @@ auto_ml.fit(train_data, val_data)
 ## 📈 Visualization Analysis
 
 ### 1. Class Distribution
-<img src="training_plots/class_distribution.png" alt="Class Distribution" width="600"/>
+<img src="Training_plots/class_distribution.png" alt="Class Distribution" width="600"/>
 
 > [!NOTE]
 > The distribution plot shows:
@@ -50,7 +50,7 @@ auto_ml.fit(train_data, val_data)
 > - Clear sign of class imbalance that may need addressing
 
 ### 2. Classification Results
-<img src="training_plots/classification_results.png" alt="Classification Matrix" width="600"/>
+<img src="Training_plots/classification_results.png" alt="Classification Matrix" width="600"/>
 
 > [!NOTE]
 > Key observations from the confusion matrix:
@@ -60,7 +60,7 @@ auto_ml.fit(train_data, val_data)
 > - Class 3 shows room for improvement in discrimination
 
 ### 3. Training Dynamics
-<img src="training_plots/loss_plot.png" alt="Loss During Training" width="600"/>
+<img src="Training_plots/loss_plot.png" alt="Loss During Training" width="600"/>
 
 > [!NOTE]
 > The loss plot reveals:
@@ -70,7 +70,7 @@ auto_ml.fit(train_data, val_data)
 > - Good model convergence with occasional exploration spikes
 
 ### 4. Learning Rate Schedule
-<img src="training_plots/lr_curve.png" alt="Learning Rate Schedule" width="600"/>
+<img src="Training_plots/lr_curve.png" alt="Learning Rate Schedule" width="600"/>
 
 > [!NOTE]
 > The learning rate schedule demonstrates:

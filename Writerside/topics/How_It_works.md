@@ -347,12 +347,13 @@ flowchart TD
 ## Core Components
 
 ### 1. Initialization
+
 ```python
-def __init__(self, config: Dict[str, Any]):
-    super().__init__()
-    self.config = config
-    self.save_hyperparameters(config)
-    self.model = self._create_model()
+def __init__(self, config: Dict [str, Any]):
+   super ().__init__ ()
+   self.config = config
+   self.save_hyperparameters (config)
+   self.model = _create_model ()
 ```
 - Stores configuration dictionary
 - Save hyperparameters for experiment tracking
@@ -798,7 +799,7 @@ The script begins by importing necessary modules and functions, including `AutoM
 
 ```python
 from lightning_auto import AutoML
-from Config import get_linear_config
+from Model_Library import get_linear_config
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 ```
@@ -958,7 +959,7 @@ def _plot_metrics_over_time(self):
     # Generates: metrics_over_time.png
 ```
 
-![](../../training_plots/logistic_regression/metrics_over_time.png)
+![](../../Training_plots/logistic_regression/metrics_over_time.png)
 
 ```python
 def _plot_roc_curve(self):
@@ -966,7 +967,7 @@ def _plot_roc_curve(self):
     # Generates: roc_curve.png
 ```
 
-![](../../training_plots/logistic_regression/roc_curve.png)
+![](../../Training_plots/logistic_regression/roc_curve.png)
 
 ```python
 def _plot_confusion_matrix(self):
@@ -974,14 +975,14 @@ def _plot_confusion_matrix(self):
     # Generates: confusion_matrix.png
 ```
 
-![](../../training_plots/logistic_regression/confusion_matrix.png)
+![](../../Training_plots/logistic_regression/confusion_matrix.png)
 
 ```python
 def _plot_probability_distribution(self):
     """Distribution of predicted probabilities"""
     # Generates: probability_distribution.png
 ```
-![](../../training_plots/logistic_regression/probability_distribution.png)
+![](../../Training_plots/logistic_regression/probability_distribution.png)
 
 ### 2. LinearRegressionVisualizer
 
