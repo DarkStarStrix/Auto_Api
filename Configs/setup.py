@@ -22,7 +22,7 @@ setup (
     python_requires=">=3.9",
     install_requires=[
         # Core ML
-        "torch==2.1.1",
+        "torch==2.2.0",
         "pytorch-lightning==2.1.1",
         "transformers==4.45.2",
         "numpy==1.24.4",
