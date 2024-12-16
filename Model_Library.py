@@ -511,3 +511,128 @@ def get_cnn_config():
             "num_workers": 8
         }
     }
+
+
+def get_kmeans_config():
+    return {
+        "model": {
+            "type": "kmeans",
+            "input_dim": None,  # Set dynamically based on data
+            "n_clusters": 3,  # Number of clusters
+            "init_method": "kmeans++",  # Initialization method: 'random' or 'kmeans++'
+            "task": "clustering",
+            "distance_metric": "euclidean",  # Options: euclidean, manhattan, cosine
+            "seed": 42  # Random seed for reproducibility
+        },
+        "training": {
+            "batch_size": 64,
+            "epochs": 50,
+            "learning_rate": 0.01,
+            "early_stopping": True,
+            "patience": 10,
+            "tolerance": 1e-4,  # Convergence criterion
+            "max_no_improvement": 5,  # Maximum iterations without improvement
+            "validation_split": 0.2
+        },
+        "preprocessing": {
+            "scaling": "standard",  # Options: standard, minmax, robust, none
+            "handle_missing": "mean",  # Options: mean, median, most_frequent, constant
+            "dimensionality_reduction": {
+                "method": None,  # Options: pca, tsne, umap, None
+                "n_components": None  # Set if using dimensionality reduction
+            },
+            "feature_selection": None
+        },
+        "evaluation": {
+            "metrics": [
+                "inertia",
+                "silhouette_score",
+                "calinski_harabasz_score",
+                "davies_bouldin_score"
+            ],
+            "store_centroids": True,
+            "track_cluster_evolution": True
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 5,
+            "save_visualizations": True,
+            "visualization_types": [
+                "cluster_boundaries",
+                "silhouette_analysis",
+                "elbow_curve",
+                "cluster_sizes"
+            ],
+            "export_results": {
+                "save_centroids": True,
+                "save_assignments": True,
+                "save_metrics": True
+            }
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "grid",  # Options: grid, random, bayesian
+            "param_grid": {
+                "n_clusters": [2, 3, 4, 5, 6],
+                "init_method": ["kmeans++", "random"],
+                "learning_rate": [0.1, 0.01, 0.001]
+            },
+            "n_trials": 10,  # Number of trials for random/bayesian search
+            "metric": "silhouette_score"  # Metric to optimize
+        }
+    }
+
+
+def get_lightgbm_config():
+    return {
+        "model": {
+            "type": "lightgbm",
+            "input_dim": None,  # Set dynamically based on data
+            "output_dim": None,  # Set dynamically based on data
+            "num_leaves": 31,
+            "max_depth": -1,  # -1 means no limit
+            "min_data_in_leaf": 20,
+            "boosting_type": "gbdt",
+            "objective": "multiclass",  # or "binary" for binary classification
+            "metric": ["multi_logloss", "multi_error"],
+            "task": "classification"
+        },
+        "training": {
+            "batch_size": 256,
+            "epochs": 100,
+            "learning_rate": 0.01,
+            "early_stopping": True,
+            "early_stopping_rounds": 10,
+            "validation_split": 0.2,
+            "num_boost_round": 100,
+            "verbose_eval": 10
+        },
+        "preprocessing": {
+            "scaling": None,  # LightGBM handles this internally
+            "handle_missing": "default",  # LightGBM handles missing values
+            "categorical_features": [],
+            "feature_selection": None
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 10,
+            "metrics": [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+                "confusion_matrix"
+            ]
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "optuna",
+            "n_trials": 100,
+            "param_grid": {
+                "num_leaves": [15, 31, 63],
+                "max_depth": [-1, 5, 10, 15],
+                "min_data_in_leaf": [10, 20, 30, 50],
+                "learning_rate": [0.01, 0.05, 0.1]
+            }
+        }
+    }

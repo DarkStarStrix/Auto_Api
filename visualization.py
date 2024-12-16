@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from pytorch_lightning.callbacks import Callback
+from sklearn.metrics import silhouette_score
+import seaborn
+import traceback
 
 
 class LogisticRegressionVisualizer (Callback):
@@ -391,3 +394,283 @@ class DecisionTreeVisualizer (Callback):
             plt.colorbar ()
             plt.savefig (os.path.join (self.log_dir, 'decision_boundaries.png'))
             plt.close ()
+
+
+class KMeansVisualizer (Callback):
+    def __init__(self, log_dir: str = "training_plots/kmeans"):
+        super ().__init__ ()
+        try:
+            # Ensure log directory exists
+            self.log_dir = log_dir
+            os.makedirs (log_dir, exist_ok=True)
+            print (f"Initialized KMeansVisualizer with log directory: {log_dir}")
+
+            # Initialize tracking lists
+            self.predictions = []
+            self.data_points = []
+            self.inertias = []
+            self.cluster_sizes_history = []
+            self.silhouette_scores = []
+
+            # Initialize plot figures
+            self.metrics_fig, self.metrics_axs = plt.subplots (2, 2, figsize=(15, 10))
+            self.cluster_fig = plt.figure (figsize=(10, 8))
+            self.cluster_ax = self.cluster_fig.add_subplot (111)
+
+            # Close initial test figures
+            plt.close (self.metrics_fig)
+            plt.close (self.cluster_fig)
+        except Exception as e:
+            print (f"Error initializing KMeansVisualizer: {str (e)}")
+            raise
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        try:
+            x, _ = batch
+            with torch.no_grad ():
+                distances, assignments = pl_module (x)
+                self.predictions.extend (assignments.cpu ().numpy ().tolist ())
+                self.data_points.extend (x.cpu ().numpy ().tolist ())
+        except Exception as e:
+            print (f"Error in validation_batch_end: {str (e)}")
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        try:
+            # Get metrics
+            metrics = trainer.callback_metrics
+
+            # Store inertia
+            inertia = metrics.get ('inertia', 0)
+            if isinstance (inertia, torch.Tensor):
+                inertia = inertia.item ()
+            self.inertias.append (inertia)
+
+            # Store cluster sizes
+            cluster_sizes = {}
+            for i in range (pl_module.n_clusters):
+                size_key = f'cluster_size_{i}'
+                size = metrics.get (size_key, 0)
+                if isinstance (size, torch.Tensor):
+                    size = size.item ()
+                cluster_sizes [f'cluster_{i}'] = size
+            self.cluster_sizes_history.append (cluster_sizes)
+
+            # Update plots
+            self._update_metric_plots (trainer.current_epoch)
+            self._update_cluster_plot (pl_module)
+
+            # Clear batch data
+            self.predictions.clear ()
+            self.data_points.clear ()
+
+        except Exception as e:
+            print (f"Error in train_epoch_end: {str (e)}")
+            import traceback
+            traceback.print_exc ()
+
+    def _update_metric_plots(self, epoch):
+        try:
+            # Clear previous plots
+            for ax in self.metrics_axs.flat:
+                ax.clear ()
+
+            # Plot 1: Inertia over time
+            ax = self.metrics_axs [0, 0]
+            epochs = range (len (self.inertias))
+            ax.plot (epochs, self.inertias, 'b-', label='Inertia')
+            ax.set_title ('Inertia over Epochs')
+            ax.set_xlabel ('Epoch')
+            ax.set_ylabel ('Inertia')
+            ax.grid (True)
+            ax.legend ()
+
+            # Plot 2: Cluster sizes over time
+            ax = self.metrics_axs [0, 1]
+            if self.cluster_sizes_history:
+                for cluster in range (len (self.cluster_sizes_history [0])):
+                    sizes = [epoch_sizes [f'cluster_{cluster}']
+                             for epoch_sizes in self.cluster_sizes_history]
+                    ax.plot (epochs, sizes, label=f'Cluster {cluster}')
+                ax.set_title ('Cluster Sizes over Epochs')
+                ax.set_xlabel ('Epoch')
+                ax.set_ylabel ('Proportion of Points')
+                ax.grid (True)
+                ax.legend ()
+
+            # Plot 3: Inertia change rate
+            ax = self.metrics_axs [1, 0]
+            if len (self.inertias) > 1:
+                changes = np.diff (self.inertias)
+                ax.plot (epochs [1:], changes, 'r-', label='Change')
+                ax.set_title ('Inertia Change Rate')
+                ax.set_xlabel ('Epoch')
+                ax.set_ylabel ('Change')
+                ax.grid (True)
+                ax.legend ()
+
+            # Plot 4: Current metrics summary
+            ax = self.metrics_axs [1, 1]
+            ax.axis ('off')
+            status_text = f"Epoch: {epoch}\n"
+            status_text += f"Current Inertia: {self.inertias [-1]:.4f}\n"
+            if len (self.inertias) > 1:
+                status_text += f"Change: {self.inertias [-1] - self.inertias [-2]:.4f}"
+            ax.text (0.1, 0.5, status_text, fontsize=10)
+
+            self.metrics_fig.suptitle ('K-Means Training Metrics', fontsize=14)
+            self.metrics_fig.tight_layout ()
+            self.metrics_fig.savefig (os.path.join (self.log_dir, 'kmeans_metrics.png'))
+
+        except Exception as e:
+            print (f"Error in _update_metric_plots: {str (e)}")
+            traceback.print_exc ()
+
+    def _update_cluster_plot(self, pl_module):
+        try:
+            # Create a simple 2D grid
+            grid_size = 100
+            x = np.linspace (-4, 4, grid_size)
+            y = np.linspace (-4, 4, grid_size)
+            X, Y = np.meshgrid (x, y)
+
+            # Clear current plot
+            self.cluster_ax.clear ()
+
+            # Get centroids (we'll only plot first 2 dimensions)
+            centroids = pl_module.centroids.detach ().cpu ().numpy () [:, :2]
+
+            # For each point in the grid, find the nearest centroid
+            XX = X.flatten ()
+            YY = Y.flatten ()
+            points = np.column_stack ([XX, YY])
+
+            # Calculate distances to centroids
+            assignments = []
+            for point in points:
+                dists = np.linalg.norm (centroids - point, axis=1)
+                assignments.append (np.argmin (dists))
+
+            # Reshape assignments back to grid
+            assignments = np.array (assignments).reshape (grid_size, grid_size)
+
+            # Plot the grid coloring
+            self.cluster_ax.contourf (X, Y, assignments, alpha=0.3, cmap='viridis')
+
+            # Plot centroids
+            self.cluster_ax.scatter (
+                centroids [:, 0], centroids [:, 1],
+                c='red', marker='x', s=200, linewidth=3,
+                label='Centroids'
+            )
+
+            # Set labels and title
+            self.cluster_ax.set_xlabel ('Dimension 1')
+            self.cluster_ax.set_ylabel ('Dimension 2')
+            self.cluster_ax.set_title ('K-Means Clusters (2D Projection)')
+            self.cluster_ax.legend ()
+
+            # Save plot
+            self.cluster_fig.savefig (
+                os.path.join (self.log_dir, 'kmeans_clusters.png'),
+                bbox_inches='tight'
+            )
+
+        except Exception as e:
+            print (f"Error in cluster plot: {e}")
+
+
+class LightGBMVisualizer (Callback):
+    def __init__(self, log_dir: str = "training_plots/lightgbm"):
+        super ().__init__ ()
+        self.log_dir = log_dir
+        os.makedirs (log_dir, exist_ok=True)
+
+        # Initialize metrics history
+        self.metrics_history = {
+            'train_accuracy': [],
+            'val_accuracy': [],
+            'feature_importance': []
+        }
+        self.predictions_history = []
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        x, y = batch
+        with torch.no_grad ():
+            preds = pl_module (x)
+            if isinstance (preds, torch.Tensor):
+                preds = preds.cpu ().numpy ()
+            self.predictions_history.extend (preds)
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        try:
+            metrics = trainer.callback_metrics
+
+            # Store metrics
+            train_acc = metrics.get ('train_accuracy', 0)
+            val_acc = metrics.get ('val_accuracy', 0)
+
+            # Convert from tensor if necessary
+            if isinstance (train_acc, torch.Tensor):
+                train_acc = train_acc.item ()
+            if isinstance (val_acc, torch.Tensor):
+                val_acc = val_acc.item ()
+
+            self.metrics_history ['train_accuracy'].append (train_acc)
+            self.metrics_history ['val_accuracy'].append (val_acc)
+
+            # Store feature importance if available
+            if hasattr (pl_module.model, 'feature_importance'):
+                importance = pl_module.model.feature_importance ()
+                if importance is not None:
+                    importance = importance / importance.sum ()
+                    self.metrics_history ['feature_importance'].append (importance)
+
+            # Create plots
+            self._plot_metrics ()
+            if self.metrics_history ['feature_importance']:
+                self._plot_feature_importance ()
+
+            self.predictions_history = []
+
+        except Exception as e:
+            print (f"Error in visualization: {str (e)}")
+            import traceback
+            traceback.print_exc ()
+
+    def _plot_metrics(self):
+        plt.figure (figsize=(12, 5))
+        epochs = range (1, len (self.metrics_history ['train_accuracy']) + 1)
+
+        # Plot accuracy
+        plt.plot (epochs, self.metrics_history ['train_accuracy'], 'b-', label='Train Accuracy')
+        plt.plot (epochs, self.metrics_history ['val_accuracy'], 'r-', label='Validation Accuracy')
+        plt.title ('Model Accuracy')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Accuracy')
+        plt.grid (True)
+        plt.legend ()
+
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'accuracy.png'))
+        plt.close ()
+
+    def _plot_feature_importance(self):
+        if not self.metrics_history ['feature_importance']:
+            return
+
+        plt.figure (figsize=(10, 6))
+        importance = self.metrics_history ['feature_importance'] [-1]  # Get latest
+        feature_indices = range (len (importance))
+
+        plt.bar (feature_indices, importance)
+        plt.title ('Feature Importance (LightGBM)')
+        plt.xlabel ('Feature Index')
+        plt.ylabel ('Importance Score')
+
+        # Add value labels on top of bars
+        for i, v in enumerate (importance):
+            plt.text (i, v, f'{v:.3f}', ha='center', va='bottom')
+
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'feature_importance.png'))
+        plt.close ()

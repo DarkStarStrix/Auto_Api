@@ -195,7 +195,7 @@ def get_custom_config():
     }
 ```
 
-2. Use the configuration:
+1. Use the configuration:
 ```python
 from config import get_custom_config
 from lightning_auto import AutoML
@@ -227,6 +227,7 @@ Learning Rate: 0.000896
 - Uniform mis-classification pattern across classes
 
 ![class_performance.png](../../Training_plots/naive_bayes/class_performance.png)
+
 ![confusion_matrix.png](../../Training_plots/naive_bayes/confusion_matrix.png)
 
 ### Probability Distribution Patterns
@@ -270,7 +271,7 @@ Learning Rate: 0.000896
 
 ![accuracy_curve.png](../../Training_plots/decision_tree/accuracy_curve.png)
 
-## Feature Importance
+## Feature Importance of the decision tree
 - Most influential: Feature 0 (0.12)
 - Least influential: Feature 9 (0.07)
 - Clear importance gradient from features 0-9
@@ -287,6 +288,92 @@ Learning Rate: 0.000896
 - Implement early stopping (epoch 3)
 - Consider feature selection focusing on top 4
 - Investigate late-stage accuracy decline
+
+## Machine Learning Models Analysis Report
+
+## K-means Clustering Results
+
+### Clustering Visualization
+The K-means clustering visualization shows a 2D projection of the data with three distinct clusters:
+- The data points are clearly separated into three regions (yellow, purple, and light blue)
+- Centroids (marked with red X) are well-positioned within each cluster
+- Clear decision boundaries between clusters indicate good separation
+- The distribution appears to be balanced across the three major regions
+
+### Training Metrics
+
+#### Inertia Analysis
+- Starting inertia: ~190 (high initial variance)
+- Final inertia: ~75.5778 (significant reduction)
+- A Steady decrease over 50 epochs indicates good convergence
+- The inertia change rate (bottom plot) shows:
+  - Rapid improvement in early epochs (-4.0 to -3.0)
+  - Gradual stabilization towards the end (-1.0526)
+  - Diminishing returns after epoch 30
+
+![kmeans_clusters.png](../../Training_plots/kmeans/kmeans_clusters.png)
+
+#### Cluster Size Distribution
+- The plot shows three clusters with stable proportions:
+  - Cluster 1 (orange line): ~70% of points
+  - Cluster 0 (blue line): ~30% of points
+  - Cluster 2 (green line): minimal points
+- The distributions stabilize quickly after the first few epochs
+- Minimal fluctuation after epoch 10 indicates stable clustering
+
+![kmeans_metrics.png](../../Training_plots/kmeans/kmeans_metrics.png)
+
+## LightGBM Classification Results
+
+### Model Performance
+- Training accuracy shows significant improvement:
+  - Starting at ~40%
+  - Rapidly improving to ~70% in the first 10 epochs
+  - Reaching and maintaining ~80% accuracy after epoch 60
+  - Final training accuracy around 85%
+- Validation accuracy:
+  - Stabilizes around 35%
+  - Significant gap with training accuracy indicates overfitting
+  - Relatively stable performance throughout training
+
+![accuracy.png](../../Training_plots/lightgbm/accuracy.png)
+
+### Feature Importance of the LightGBM
+The feature importance bar plot reveals:
+- Most influential features:
+  - Feature 4: 0.123 (the highest importance)
+  - Feature 2: 0.117
+  - Features 8 and 9: 0.108 each
+- Least influential features:
+  - Feature 6: 0.079 (the lowest importance)
+  - Features 1 and 7: 0.083 each
+- Relatively balanced feature importance distribution (0.079-0.123 range)
+
+![feature_importance.png](../../Training_plots/lightgbm/feature_importance.png)
+
+## Conclusions and Recommendations
+
+### K-means Model
+- Successfully identified three distinct clusters
+- Good convergence with stable final state
+- Possible improvements:
+  - Consider adjusting the number of clusters due to the small size of Cluster 2
+  - Experiment with different initialization methods
+
+### LightGBM Model
+- Shows signs of overfitting:
+  - Large gap between training and validation accuracy
+  - High training accuracy but poor validation performance
+- Recommended improvements:
+  - Implement regularization techniques
+  - Feature selection focusing on top 4-5 features
+  - Cross-validation to improve generalization
+  - Consider reducing model complexity
+
+### Overall System
+- Both models demonstrate learning but with different challenges
+- K-means shows better stability and convergence
+- LightGBM needs optimization for better generalization
 
 ## Saving and Loading Models
 
