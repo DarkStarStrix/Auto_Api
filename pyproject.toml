@@ -11,7 +11,7 @@ authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
 dependencies = [
-    "torch==2.1.1",
+    "torch==2.2.0",
     "pytorch-lightning==2.1.1",
     "transformers==4.45.2",
     "numpy==1.24.4",
@@ -29,7 +29,7 @@ dependencies = [
     "click==8.1.7",
     "optuna==4.1.0",
     "config==0.5.1",
-    "PyJWT==2.10.0",
+    "PyJWT==2.10.1",
     "prometheus-client==0.21.0",
     "scipy==1.13.1",
     "neptune==2.0.0a9",
