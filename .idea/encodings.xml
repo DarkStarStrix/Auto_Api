@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/model.pt" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/models/cancer_classifier.pt" charset="ISO-8859-1" />
+    <file url="file://$PROJECT_DIR$/models/kmeans_model.pt" charset="ISO-8859-1" />
+    <file url="file://$PROJECT_DIR$/models/lightgbm_model.pt" charset="ISO-8859-1" />
     <file url="file://$PROJECT_DIR$/models/linear_model.pt" charset="ISO-8859-1" />
     <file url="file://$PROJECT_DIR$/models/model.pt" charset="ISO-8859-1" />
   </component>
