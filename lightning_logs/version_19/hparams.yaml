@@ -1,0 +1,53 @@
+evaluation:
+  metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  store_feature_importance: true
+hyperparameter_search:
+  enabled: false
+  method: grid
+  metric: accuracy
+  n_trials: 10
+  param_grid:
+    max_depth:
+    - null
+    - 10
+    - 20
+    - 30
+    n_estimators:
+    - 50
+    - 100
+    - 200
+logging:
+  export_results:
+    save_metrics: true
+  log_interval: 5
+  save_visualizations: true
+  tensorboard: true
+  visualization_types:
+  - feature_importance
+model:
+  input_dim: 10
+  max_depth: null
+  n_estimators: 100
+  output_dim: 3
+  task: classification
+  type: random_forest
+preprocessing:
+  dimensionality_reduction:
+    method: null
+    n_components: null
+  feature_selection: null
+  handle_missing: mean
+  scaling: standard
+training:
+  batch_size: 64
+  early_stopping: true
+  epochs: 50
+  learning_rate: 0.01
+  max_no_improvement: 5
+  patience: 10
+  tolerance: 0.0001
+  validation_split: 0.2

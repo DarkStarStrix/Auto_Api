@@ -1,0 +1,51 @@
+evaluation:
+  metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+hyperparameter_search:
+  enabled: false
+  method: grid
+  metric: accuracy
+  n_trials: 10
+  param_grid:
+    C:
+    - 0.1
+    - 1.0
+    - 10.0
+    kernel:
+    - linear
+    - rbf
+    - poly
+logging:
+  export_results:
+    save_metrics: true
+  log_interval: 5
+  save_visualizations: true
+  tensorboard: true
+  visualization_types:
+  - confusion_matrix
+model:
+  C: 1.0
+  input_dim: 10
+  kernel: rbf
+  output_dim: 2
+  task: classification
+  type: svm
+preprocessing:
+  dimensionality_reduction:
+    method: null
+    n_components: null
+  feature_selection: null
+  handle_missing: mean
+  scaling: standard
+training:
+  batch_size: 64
+  early_stopping: true
+  epochs: 50
+  learning_rate: 0.01
+  max_no_improvement: 5
+  patience: 10
+  tolerance: 0.0001
+  validation_split: 0.2

@@ -1,0 +1,54 @@
+evaluation:
+  metrics:
+  - aic
+  - bic
+  store_centroids: true
+hyperparameter_search:
+  enabled: false
+  method: grid
+  metric: bic
+  n_trials: 10
+  param_grid:
+    covariance_type:
+    - full
+    - tied
+    - diag
+    - spherical
+    n_components:
+    - 2
+    - 3
+    - 4
+    - 5
+logging:
+  export_results:
+    save_assignments: true
+    save_centroids: true
+    save_metrics: true
+  log_interval: 5
+  save_visualizations: true
+  tensorboard: true
+  visualization_types:
+  - cluster_boundaries
+model:
+  covariance_type: full
+  input_dim: 10
+  n_components: 3
+  output_dim: 3
+  task: clustering
+  type: gmm
+preprocessing:
+  dimensionality_reduction:
+    method: null
+    n_components: null
+  feature_selection: null
+  handle_missing: mean
+  scaling: standard
+training:
+  batch_size: 64
+  early_stopping: true
+  epochs: 50
+  learning_rate: 0.01
+  max_no_improvement: 5
+  patience: 10
+  tolerance: 0.0001
+  validation_split: 0.2

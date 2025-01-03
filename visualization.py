@@ -1,12 +1,18 @@
 # visualization.py
 import os
 import matplotlib.pyplot as plt
+import matplotlib.colors as ListedColormap
+import matplotlib.colors as Ellipse
 import numpy as np
 import torch
 from pytorch_lightning.callbacks import Callback
 from sklearn.metrics import silhouette_score
 import seaborn
 import traceback
+from sklearn.tree import export_graphviz
+import graphviz
+import pydotplus
+import pydot
 
 
 class LogisticRegressionVisualizer (Callback):
@@ -674,3 +680,297 @@ class LightGBMVisualizer (Callback):
         plt.tight_layout ()
         plt.savefig (os.path.join (self.log_dir, 'feature_importance.png'))
         plt.close ()
+
+
+class RandomForestVisualizer (Callback):
+    def __init__(self, log_dir: str = "Training_plots/random_forest"):
+        super ().__init__ ()
+        self.log_dir = log_dir
+        os.makedirs (log_dir, exist_ok=True)
+
+        # Initialize metrics history
+        self.metrics_history = {
+            'train_accuracy': [],
+            'val_accuracy': [],
+            'feature_importance': [],
+            'tree': []
+        }
+        self.predictions_history = []
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        x, y = batch
+        with torch.no_grad ():
+            preds = pl_module (x)
+            if isinstance (preds, torch.Tensor):
+                preds = preds.cpu ().numpy ()
+            self.predictions_history.extend (preds)
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        try:
+            metrics = trainer.callback_metrics
+
+            # Store metrics
+            train_acc = metrics.get ('train_accuracy', 0)
+            val_acc = metrics.get ('val_accuracy', 0)
+
+            # Convert from tensor if necessary
+            if isinstance (train_acc, torch.Tensor):
+                train_acc = train_acc.item ()
+            if isinstance (val_acc, torch.Tensor):
+                val_acc = val_acc.item ()
+
+            self.metrics_history ['train_accuracy'].append (train_acc)
+            self.metrics_history ['val_accuracy'].append (val_acc)
+
+            # Store feature importance if available
+            if hasattr (pl_module.model, 'feature_importance'):
+                importance = pl_module.model.feature_importance ()
+                if importance is not None:
+                    importance = importance / importance.sum ()
+                    self.metrics_history ['feature_importance'].append (importance)
+
+            # Store tree if available
+            if hasattr (pl_module.model, 'estimators_'):
+                for i, estimator in enumerate (pl_module.model.estimators_):
+                    self._plot_tree (estimator, feature_names=pl_module.feature_names)
+
+            # Create plots
+            self._plot_metrics ()
+            if self.metrics_history ['feature_importance']:
+                self._plot_feature_importance ()
+
+            self.predictions_history = []
+
+        except Exception as e:
+            print (f"Error in visualization: {str (e)}")
+            import traceback
+            traceback.print_exc ()
+
+    def _plot_metrics(self):
+        plt.figure (figsize=(12, 5))
+        epochs = range (1, len (self.metrics_history ['train_accuracy']) + 1)
+
+        # Plot accuracy
+        plt.plot (epochs, self.metrics_history ['train_accuracy'], 'b-', label='Train Accuracy')
+        plt.plot (epochs, self.metrics_history ['val_accuracy'], 'r-', label='Validation Accuracy')
+        plt.title ('Model Accuracy')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Accuracy')
+        plt.grid (True)
+        plt.legend ()
+
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'accuracy.png'))
+        plt.close ()
+
+    def _plot_feature_importance(self):
+        if not self.metrics_history ['feature_importance']:
+            return
+
+        plt.figure (figsize=(10, 6))
+        importance = self.metrics_history ['feature_importance'] [-1]
+
+        feature_indices = range (len (importance))
+        plt.bar (feature_indices, importance)
+
+        plt.title ('Feature Importance (Random Forest)')
+        plt.xlabel ('Feature Index')
+        plt.ylabel ('Importance Score')
+
+        # Add value labels on top of bars
+        for i, v in enumerate (importance):
+            plt.text (i, v, f'{v:.3f}', ha='center', va='bottom')
+
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'feature_importance.png'))
+        plt.close ()
+
+    def _plot_tree(self, estimator, feature_names):
+        try:
+            dot_data = export_graphviz (estimator, out_file=None, feature_names=feature_names, filled=True,
+                                        rounded=True, special_characters=True)
+            graphs = pydot.graph_from_dot_data (dot_data)
+            if graphs:
+                graph = graphs [0]  # Access the first graph in the list
+                graph.write_png (os.path.join (self.log_dir, f'tree_{len (self.metrics_history ["tree"])}.png'))
+        except Exception as e:
+            print (f"Error in _plot_tree: {str (e)}")
+            raise
+
+
+class SVMVisualizer(Callback):
+    def __init__(self, log_dir: str = "training_plots/svm"):
+        super().__init__()
+        self.log_dir = log_dir
+        os.makedirs(log_dir, exist_ok=True)
+        self.metrics_history = {
+            'train_loss': [],
+            'val_loss': [],
+            'decision_boundary': []
+        }
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        pass
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        try:
+            metrics = trainer.callback_metrics
+            train_loss = metrics.get('train_loss', 0)
+            val_loss = metrics.get('val_loss', 0)
+
+            if isinstance(train_loss, torch.Tensor):
+                train_loss = train_loss.item()
+            if isinstance(val_loss, torch.Tensor):
+                val_loss = val_loss.item()
+
+            self.metrics_history['train_loss'].append(train_loss)
+            self.metrics_history['val_loss'].append(val_loss)
+
+            self._plot_metrics()
+
+            # Plot decision boundary if input dimension is 2
+            if pl_module.input_dim == 2:
+                X, y = trainer.datamodule.train_dataloader().dataset.tensors
+                self.plot_decision_boundary(pl_module.model, X.cpu().numpy())
+
+        except Exception as e:
+            print(f"Error in visualization: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _plot_metrics(self):
+        plt.figure(figsize=(12, 5))
+        epochs = range(1, len(self.metrics_history['train_loss']) + 1)
+
+        plt.plot(epochs, self.metrics_history['train_loss'], 'b-', label='Train Loss')
+        plt.plot(epochs, self.metrics_history['val_loss'], 'r-', label='Validation Loss')
+        plt.title('Model Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.grid(True)
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.log_dir, 'loss.png'))
+        plt.close()
+
+    def plot_decision_boundary(model, X, y):
+        # Define the mesh grid
+        x_min, x_max = X [:, 0].min () - 1, X [:, 0].max () + 1
+        y_min, y_max = X [:, 1].min () - 1, X [:, 1].max () + 1
+        xx, yy = np.meshgrid (np.arange (x_min, x_max, 0.01),
+                              np.arange (y_min, y_max, 0.01))
+
+        # Predict the function value for the whole grid
+        Z = model.predict (np.c_ [xx.ravel (), yy.ravel ()])
+        Z = Z.reshape (xx.shape)
+
+        # Plot the contour and training examples
+        plt.contourf (xx, yy, Z, alpha=0.8, cmap=ListedColormap)
+        plt.scatter (X [:, 0], X [:, 1], c=y, edgecolor='k', s=20, cmap=ListedColormap)
+        plt.xlim (xx.min (), xx.max ())
+        plt.ylim (yy.min (), yy.max ())
+        plt.title ("Decision Boundary")
+        plt.show ()
+
+
+class GaussianMixtureVisualizer(Callback):
+    def __init__(self, log_dir: str = "training_plots/gaussian_mixture"):
+        super().__init__()
+        self.log_dir = log_dir
+        os.makedirs(log_dir, exist_ok=True)
+        self.metrics_history = {
+            'train_loss': [],
+            'val_loss': [],
+            'gaussian_mixture': []
+        }
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        pass
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        try:
+            metrics = trainer.callback_metrics
+            train_loss = metrics.get ('train_loss', 0)
+            val_loss = metrics.get ('val_loss', 0)
+
+            if isinstance (train_loss, torch.Tensor):
+                train_loss = train_loss.item ()
+            if isinstance (val_loss, torch.Tensor):
+                val_loss = val_loss.item ()
+
+            self.metrics_history ['train_loss'].append (train_loss)
+            self.metrics_history ['val_loss'].append (val_loss)
+
+            self._plot_metrics ()
+
+            if trainer.datamodule is not None:
+                X = trainer.datamodule.train_dataloader ().dataset.tensors [0]
+                self._plot_gaussian_mixture (pl_module.model, X)
+            else:
+                print ("Error: datamodule is None")
+
+        except Exception as e:
+            print (f"Error in visualization: {str (e)}")
+            import traceback
+            traceback.print_exc ()
+
+    def _plot_metrics(self):
+        plt.figure(figsize=(12, 5))
+        epochs = range(1, len(self.metrics_history['train_loss']) + 1)
+
+        plt.plot(epochs, self.metrics_history['train_loss'], 'b-', label='Train Loss')
+        plt.plot(epochs, self.metrics_history['val_loss'], 'r-', label='Validation Loss')
+        plt.title('Model Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.grid(True)
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.log_dir, 'loss.png'))
+        plt.close()
+
+    def _plot_gaussian_mixture(self, model, X):
+        try:
+            # Plot the data points
+            plt.figure(figsize=(10, 8))
+            plt.scatter(X[:, 0], X[:, 1], s=10, c='black', alpha=0.5)
+
+            # Plot the Gaussian Mixture components
+            for i in range(model.n_components):
+                mean = model.means_[i]
+                cov = model.covariances_[i]
+                self._plot_ellipse(mean, cov, alpha=0.5)
+
+            plt.title('Gaussian Mixture Model')
+            plt.xlabel('Feature 1')
+            plt.ylabel('Feature 2')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.log_dir, 'gaussian_mixture.png'))
+            plt.close()
+
+        except Exception as e:
+            print(f"Error in _plot_gaussian_mixture: {str(e)}")
+            raise
+
+    def _plot_ellipse(self, mean, cov, alpha=0.5):
+        try:
+            # Calculate the eigenvectors and eigenvalues
+            eig_vals, eig_vecs = np.linalg.eig(cov)
+
+            # Get the major and minor axes
+            major_axis = np.argmax(eig_vals)
+            minor_axis = 1 - major_axis
+
+            # Calculate the angle of rotation
+            angle = np.degrees(np.arctan(eig_vecs[major_axis, 1] / eig_vecs[major_axis, 0]))
+
+            # Create the ellipse
+            ellipse = Ellipse
+
+            plt.gca().add_patch(ellipse)
+
+        except Exception as e:
+            print(f"Error in _plot_ellipse: {str(e)}")
+            raise

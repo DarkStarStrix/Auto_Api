@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from visualization import NaiveBayesVisualizer, DecisionTreeVisualizer, KMeansVisualizer, LightGBMVisualizer
+from visualization import NaiveBayesVisualizer, DecisionTreeVisualizer, KMeansVisualizer, LightGBMVisualizer, \
+    RandomForestVisualizer, SVMVisualizer, GaussianMixtureVisualizer
 from typing import List, Dict, Any
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import lightgbm as lgb
+from sklearn.ensemble import RandomForestClassifier
 
 
 class BaseModel (pl.LightningModule):
@@ -115,6 +117,7 @@ class LogisticRegressionModel (BaseModel):
 class NaiveBayesModel (BaseModel):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ (config)
+        self.save_hyperparameters (config)
         self.input_dim = config ['model'] ['input_dim']
         self.output_dim = config ['model'] ['output_dim']
 
@@ -167,14 +170,12 @@ def _create_model():
     return nn.Identity ()
 
 
-class DecisionTreeModel (pl.LightningModule):
+class DecisionTreeModel (nn.Module):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ ()
+        self.save_hyperparameters (config)
+        self.max_depth = config ['model'] ['max_depth']
         self.input_dim = config ['model'] ['input_dim']
-        self.output_dim = config ['model'] ['output_dim']
-        self.max_depth = config ['model'].get ('max_depth', 5)
-        self.learning_rate = config ['training'].get ('learning_rate', 0.001)
-
         self.feature_thresholds = nn.Parameter (torch.randn (2 ** self.max_depth - 1, self.input_dim))
         self.leaf_predictions = nn.Parameter (torch.randn (2 ** self.max_depth, self.output_dim))
 
@@ -233,6 +234,7 @@ class DecisionTreeModel (pl.LightningModule):
 class KMeansModel (pl.LightningModule):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ ()
+        self.save_hyperparameters (config)  # Save hyperparameters
         self.input_dim = config ['model'] ['input_dim']
         self.n_clusters = config ['model'] ['n_clusters']
         self.learning_rate = config ['training'].get ('learning_rate', 0.001)
@@ -325,6 +327,7 @@ class KMeansModel (pl.LightningModule):
 class LightGBMModel (pl.LightningModule):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ ()
+        self.save_hyperparameters (config)  # Save hyperparameters
         self.automatic_optimization = False  # Turn off automatic optimization
 
         self.input_dim = config ['model'] ['input_dim']
@@ -406,3 +409,156 @@ class LightGBMModel (pl.LightningModule):
 
     def configure_callbacks(self):
         return [LightGBMVisualizer ()]
+
+
+class RandomForestModel(pl.LightningModule):
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__()
+        self.save_hyperparameters(config)  # Save hyperparameters
+
+        self.automatic_optimization = False  # Turn off automatic optimization
+
+        self.input_dim = config['model']['input_dim']
+        self.output_dim = config['model']['output_dim']
+        self.n_estimators = config['model'].get('n_estimators', 100)
+        self.max_depth = config['model'].get('max_depth', None)
+        self.feature_names = config['model'].get('feature_names', None)
+        self.class_names = config['model'].get('class_names', None)
+
+        # Initialize the RandomForest model
+        self.model = RandomForestClassifier(n_estimators=self.n_estimators, max_depth=self.max_depth)
+        self.is_fitted = False
+
+    def forward(self, x):
+        if not self.is_fitted:
+            return torch.zeros(x.size(0), self.output_dim, device=self.device)
+
+        # Get predictions
+        x_np = x.cpu().numpy()
+        preds = self.model.predict(x_np)
+
+        # Convert to tensor
+        if self.output_dim > 2:
+            return torch.from_numpy(preds).float().to(self.device)
+        else:
+            preds = torch.from_numpy(preds).float().unsqueeze(1).to(self.device)
+            return torch.cat([1 - preds, preds], dim=1)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        x_np = x.cpu().numpy()
+        y_np = y.cpu().numpy()
+
+        # Train the RandomForest model
+        self.model.fit(x_np, y_np)
+        self.is_fitted = True
+
+        # Compute and return the loss
+        loss = self._compute_loss(batch)
+
+        # Get predictions for logging
+        y_hat = self.forward(x)
+        if y_hat.dim() == 1:
+            y_hat = y_hat.unsqueeze(1)
+        predictions = torch.argmax(y_hat, dim=1)
+        accuracy = (predictions == y).float().mean()
+
+        # Log metrics
+        self.log('train_accuracy', accuracy, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self(x)
+        if y_hat.dim() == 1:
+            y_hat = y_hat.unsqueeze(1)
+        predictions = torch.argmax(y_hat, dim=1)
+        accuracy = (predictions == y).float().mean()
+        self.log('val_accuracy', accuracy, prog_bar=True)
+
+    def configure_optimizers(self):
+        # No optimizer needed
+        return None
+
+    def configure_callbacks(self):
+        return [RandomForestVisualizer()]
+
+    def _compute_loss(self, batch):
+        x, y = batch
+        y_hat = self(x)
+        loss = nn.CrossEntropyLoss()(y_hat, y.float())
+        return loss
+
+
+class SVMModel (pl.LightningModule):
+    def __init__(self, config: Dict [str, Any]):
+        super ().__init__ ()
+        self.save_hyperparameters(config)  # Save hyperparameters
+        self.automatic_optimization = False  # Turn off automatic optimization
+
+        self.input_dim = config ['model'] ['input_dim']
+        self.output_dim = config ['model'] ['output_dim']
+        self.kernel = config ['model'].get ('kernel', 'linear')
+        self.C = config ['model'].get ('C', 1.0)
+        self.model = nn.Linear (self.input_dim, self.output_dim)
+
+    def forward(self, x):
+        return self.model (x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self (x)
+        loss = nn.CrossEntropyLoss () (y_hat, y)
+        self.log ('train_loss', loss, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self (x)
+        loss = nn.CrossEntropyLoss () (y_hat, y)
+        self.log ('val_loss', loss, prog_bar=True)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam (self.parameters (), lr=0.001)
+
+    def configure_callbacks(self):
+        return [SVMVisualizer ()]
+
+
+class GaussianMixtureModel (pl.LightningModule):
+    def __init__(self, config: Dict [str, Any]):
+        super ().__init__ ()
+        self.save_hyperparameters(config)  # Save hyperparameters
+        self.automatic_optimization = False  # Turn off automatic optimization
+
+        self.input_dim = config ['model'] ['input_dim']
+        self.output_dim = config ['model'] ['output_dim']
+        self.n_components = config ['model'].get ('n_components', 1)
+        self.model = nn.Sequential (
+            nn.Linear (self.input_dim, self.output_dim),
+            nn.Softmax (dim=1)
+        )
+
+    def forward(self, x):
+        return self.model (x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self (x)
+        loss = nn.CrossEntropyLoss () (y_hat, y)
+        self.log ('train_loss', loss, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self (x)
+        loss = nn.CrossEntropyLoss () (y_hat, y)
+        self.log ('val_loss', loss, prog_bar=True)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam (self.parameters (), lr=0.001)
+
+    def configure_callbacks(self):
+        return [GaussianMixtureVisualizer ()]

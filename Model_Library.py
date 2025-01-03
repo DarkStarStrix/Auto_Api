@@ -636,3 +636,187 @@ def get_lightgbm_config():
             }
         }
     }
+
+
+def get_random_forest_config():
+    return {
+        "model": {
+            "type": "random_forest",
+            "input_dim": None,  # Set dynamically based on data
+            "output_dim": None,  # Set dynamically based on data
+            "n_estimators": 100,
+            "max_depth": None,
+            "task": "classification"
+        },
+        "training": {
+            "batch_size": 64,
+            "epochs": 50,
+            "learning_rate": 0.01,
+            "early_stopping": True,
+            "patience": 10,
+            "tolerance": 1e-4,
+            "max_no_improvement": 5,
+            "validation_split": 0.2
+        },
+        "preprocessing": {
+            "scaling": "standard",
+            "handle_missing": "mean",
+            "dimensionality_reduction": {
+                "method": None,
+                "n_components": None
+            },
+            "feature_selection": None
+        },
+        "evaluation": {
+            "metrics": [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1"
+            ],
+            "store_feature_importance": True
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 5,
+            "save_visualizations": True,
+            "visualization_types": [
+                "feature_importance"
+            ],
+            "export_results": {
+                "save_metrics": True
+            }
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "grid",
+            "param_grid": {
+                "n_estimators": [50, 100, 200],
+                "max_depth": [None, 10, 20, 30]
+            },
+            "n_trials": 10,
+            "metric": "accuracy"
+        }
+    }
+
+
+def get_svm_config():
+    return {
+        "model": {
+            "type": "svm",
+            "input_dim": None,  # Set dynamically based on data
+            "output_dim": None,  # Set dynamically based on data
+            "kernel": "rbf",
+            "C": 1.0,
+            "task": "classification"
+        },
+        "training": {
+            "batch_size": 64,
+            "epochs": 50,
+            "learning_rate": 0.01,
+            "early_stopping": True,
+            "patience": 10,
+            "tolerance": 1e-4,
+            "max_no_improvement": 5,
+            "validation_split": 0.2
+        },
+        "preprocessing": {
+            "scaling": "standard",
+            "handle_missing": "mean",
+            "dimensionality_reduction": {
+                "method": None,
+                "n_components": None
+            },
+            "feature_selection": None
+        },
+        "evaluation": {
+            "metrics": [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1"
+            ]
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 5,
+            "save_visualizations": True,
+            "visualization_types": [
+                "confusion_matrix"
+            ],
+            "export_results": {
+                "save_metrics": True
+            }
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "grid",
+            "param_grid": {
+                "kernel": ["linear", "rbf", "poly"],
+                "C": [0.1, 1.0, 10.0]
+            },
+            "n_trials": 10,
+            "metric": "accuracy"
+        }
+    }
+
+
+def get_gmm_config():
+    return {
+        "model": {
+            "type": "gmm",
+            "input_dim": None,  # Set dynamically based on data
+            "n_components": 3,
+            "covariance_type": "full",
+            "task": "clustering"
+        },
+        "training": {
+            "batch_size": 64,
+            "epochs": 50,
+            "learning_rate": 0.01,
+            "early_stopping": True,
+            "patience": 10,
+            "tolerance": 1e-4,
+            "max_no_improvement": 5,
+            "validation_split": 0.2
+        },
+        "preprocessing": {
+            "scaling": "standard",
+            "handle_missing": "mean",
+            "dimensionality_reduction": {
+                "method": None,
+                "n_components": None
+            },
+            "feature_selection": None
+        },
+        "evaluation": {
+            "metrics": [
+                "aic",
+                "bic"
+            ],
+            "store_centroids": True
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 5,
+            "save_visualizations": True,
+            "visualization_types": [
+                "cluster_boundaries"
+            ],
+            "export_results": {
+                "save_centroids": True,
+                "save_assignments": True,
+                "save_metrics": True
+            }
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "grid",
+            "param_grid": {
+                "n_components": [2, 3, 4, 5],
+                "covariance_type": ["full", "tied", "diag", "spherical"]
+            },
+            "n_trials": 10,
+            "metric": "bic"
+        }
+    }
