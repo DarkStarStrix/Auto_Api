@@ -3,7 +3,7 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\Train_Files\lightning_logs\version_0\metrics.csv">
+        <entry key="\Data\processed_advertising.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from visualization import NaiveBayesVisualizer, DecisionTreeVisualizer, KMeansVisualizer, LightGBMVisualizer, \
+from visualization import LinearRegressionVisualizer, LogisticRegressionVisualizer, NaiveBayesVisualizer, DecisionTreeVisualizer, KMeansVisualizer, LightGBMVisualizer, \
     RandomForestVisualizer, SVMVisualizer, GaussianMixtureVisualizer
 from typing import List, Dict, Any
 from torch.utils.data import TensorDataset, DataLoader

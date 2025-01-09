@@ -133,7 +133,7 @@ class LogisticRegressionVisualizer (Callback):
 class LinearRegressionVisualizer (Callback):
     """Visualization callback for linear regression."""
 
-    def __init__(self, log_dir: str = "training_plots/linear_regression"):
+    def __init__(self, log_dir: str = "training_plots/linear_regression", feature_names: list = None, **kwargs):
         super ().__init__ ()
         self.log_dir = log_dir
         os.makedirs (log_dir, exist_ok=True)
@@ -144,6 +144,8 @@ class LinearRegressionVisualizer (Callback):
         self.training_losses = []
         self.validation_losses = []
         self.residuals = []
+        self.feature_names = feature_names if feature_names else ["Feature", "Target"]
+        self.kwargs = kwargs  # Store additional arguments
 
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
         """Collect predictions and actual values."""
@@ -200,17 +202,16 @@ class LinearRegressionVisualizer (Callback):
         plt.close ()
 
     def _plot_residuals(self):
-        """Plot residuals vs predicted values."""
-        if len (self.predictions) > 0:
-            plt.figure (figsize=(10, 6))
-            plt.scatter (self.predictions, self.residuals, alpha=0.5)
-            plt.axhline (y=0, color='r', linestyle='--')
-            plt.title ('Residual Plot')
-            plt.xlabel ('Predicted Values')
-            plt.ylabel ('Residuals')
-            plt.grid (True)
-            plt.savefig (os.path.join (self.log_dir, 'residuals.png'))
-            plt.close ()
+        """Plot residuals over time."""
+        plt.figure (figsize=(10, 6))
+        epochs = range (1, len (self.residuals) + 1)
+        plt.plot (epochs, self.residuals, 'g-')
+        plt.title ('Residuals Over Time')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Residual Value')
+        plt.grid (True)
+        plt.savefig (os.path.join (self.log_dir, 'residuals.png'))
+        plt.close ()
 
     def _plot_predictions_vs_actual(self):
         """Plot predicted vs actual values."""
@@ -223,8 +224,8 @@ class LinearRegressionVisualizer (Callback):
             plt.plot ([min_val, max_val], [min_val, max_val], 'r--')
 
             plt.title ('Predictions vs Actual Values')
-            plt.xlabel ('Actual Values')
-            plt.ylabel ('Predicted Values')
+            plt.xlabel (self.feature_names [1])
+            plt.ylabel (self.feature_names [0])
             plt.grid (True)
             plt.savefig (os.path.join (self.log_dir, 'predictions_vs_actual.png'))
             plt.close ()
@@ -240,6 +241,9 @@ class LinearRegressionVisualizer (Callback):
             plt.grid (True)
             plt.savefig (os.path.join (self.log_dir, 'residual_distribution.png'))
             plt.close ()
+
+
+visualizer = LinearRegressionVisualizer (feature_names=["TV", "Sales"])
 
 
 class NaiveBayesVisualizer (Callback):
@@ -798,11 +802,11 @@ class RandomForestVisualizer (Callback):
             raise
 
 
-class SVMVisualizer(Callback):
+class SVMVisualizer (Callback):
     def __init__(self, log_dir: str = "training_plots/svm"):
-        super().__init__()
+        super ().__init__ ()
         self.log_dir = log_dir
-        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs (log_dir, exist_ok=True)
         self.metrics_history = {
             'train_loss': [],
             'val_loss': [],
@@ -815,44 +819,44 @@ class SVMVisualizer(Callback):
     def on_train_epoch_end(self, trainer, pl_module):
         try:
             metrics = trainer.callback_metrics
-            train_loss = metrics.get('train_loss', 0)
-            val_loss = metrics.get('val_loss', 0)
+            train_loss = metrics.get ('train_loss', 0)
+            val_loss = metrics.get ('val_loss', 0)
 
-            if isinstance(train_loss, torch.Tensor):
-                train_loss = train_loss.item()
-            if isinstance(val_loss, torch.Tensor):
-                val_loss = val_loss.item()
+            if isinstance (train_loss, torch.Tensor):
+                train_loss = train_loss.item ()
+            if isinstance (val_loss, torch.Tensor):
+                val_loss = val_loss.item ()
 
-            self.metrics_history['train_loss'].append(train_loss)
-            self.metrics_history['val_loss'].append(val_loss)
+            self.metrics_history ['train_loss'].append (train_loss)
+            self.metrics_history ['val_loss'].append (val_loss)
 
-            self._plot_metrics()
+            self._plot_metrics ()
 
             # Plot decision boundary if input dimension is 2
             if pl_module.input_dim == 2:
-                X, y = trainer.datamodule.train_dataloader().dataset.tensors
-                self.plot_decision_boundary(pl_module.model, X.cpu().numpy())
+                X, y = trainer.datamodule.train_dataloader ().dataset.tensors
+                self.plot_decision_boundary (pl_module.model, X.cpu ().numpy ())
 
         except Exception as e:
-            print(f"Error in visualization: {str(e)}")
+            print (f"Error in visualization: {str (e)}")
             import traceback
-            traceback.print_exc()
+            traceback.print_exc ()
 
     def _plot_metrics(self):
-        plt.figure(figsize=(12, 5))
-        epochs = range(1, len(self.metrics_history['train_loss']) + 1)
+        plt.figure (figsize=(12, 5))
+        epochs = range (1, len (self.metrics_history ['train_loss']) + 1)
 
-        plt.plot(epochs, self.metrics_history['train_loss'], 'b-', label='Train Loss')
-        plt.plot(epochs, self.metrics_history['val_loss'], 'r-', label='Validation Loss')
-        plt.title('Model Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.grid(True)
-        plt.legend()
+        plt.plot (epochs, self.metrics_history ['train_loss'], 'b-', label='Train Loss')
+        plt.plot (epochs, self.metrics_history ['val_loss'], 'r-', label='Validation Loss')
+        plt.title ('Model Loss')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Loss')
+        plt.grid (True)
+        plt.legend ()
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.log_dir, 'loss.png'))
-        plt.close()
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'loss.png'))
+        plt.close ()
 
     def plot_decision_boundary(model, X, y):
         # Define the mesh grid
@@ -874,11 +878,11 @@ class SVMVisualizer(Callback):
         plt.show ()
 
 
-class GaussianMixtureVisualizer(Callback):
+class GaussianMixtureVisualizer (Callback):
     def __init__(self, log_dir: str = "training_plots/gaussian_mixture"):
-        super().__init__()
+        super ().__init__ ()
         self.log_dir = log_dir
-        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs (log_dir, exist_ok=True)
         self.metrics_history = {
             'train_loss': [],
             'val_loss': [],
@@ -916,61 +920,62 @@ class GaussianMixtureVisualizer(Callback):
             traceback.print_exc ()
 
     def _plot_metrics(self):
-        plt.figure(figsize=(12, 5))
-        epochs = range(1, len(self.metrics_history['train_loss']) + 1)
+        plt.figure (figsize=(12, 5))
+        epochs = range (1, len (self.metrics_history ['train_loss']) + 1)
 
-        plt.plot(epochs, self.metrics_history['train_loss'], 'b-', label='Train Loss')
-        plt.plot(epochs, self.metrics_history['val_loss'], 'r-', label='Validation Loss')
-        plt.title('Model Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.grid(True)
-        plt.legend()
+        plt.plot (epochs, self.metrics_history ['train_loss'], 'b-', label='Train Loss')
+        plt.plot (epochs, self.metrics_history ['val_loss'], 'r-', label='Validation Loss')
+        plt.title ('Model Loss')
+        plt.xlabel ('Epoch')
+        plt.ylabel ('Loss')
+        plt.grid (True)
+        plt.legend ()
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.log_dir, 'loss.png'))
-        plt.close()
+        plt.tight_layout ()
+        plt.savefig (os.path.join (self.log_dir, 'loss.png'))
+        plt.close ()
 
     def _plot_gaussian_mixture(self, model, X):
         try:
             # Plot the data points
-            plt.figure(figsize=(10, 8))
-            plt.scatter(X[:, 0], X[:, 1], s=10, c='black', alpha=0.5)
+            plt.figure (figsize=(10, 8))
+            plt.scatter (X [:, 0], X [:, 1], s=10, c='black', alpha=0.5)
 
             # Plot the Gaussian Mixture components
-            for i in range(model.n_components):
-                mean = model.means_[i]
-                cov = model.covariances_[i]
-                self._plot_ellipse(mean, cov, alpha=0.5)
+            for i in range (model.n_components):
+                mean = model.means_ [i]
+                cov = model.covariances_ [i]
+                self._plot_ellipse (mean, cov, alpha=0.5)
 
-            plt.title('Gaussian Mixture Model')
-            plt.xlabel('Feature 1')
-            plt.ylabel('Feature 2')
-            plt.grid(True)
-            plt.savefig(os.path.join(self.log_dir, 'gaussian_mixture.png'))
-            plt.close()
+            plt.title ('Gaussian Mixture Model')
+            plt.xlabel ('Feature 1')
+            plt.ylabel ('Feature 2')
+            plt.grid (True)
+            plt.savefig (os.path.join (self.log_dir, 'gaussian_mixture.png'))
+            plt.close ()
 
         except Exception as e:
-            print(f"Error in _plot_gaussian_mixture: {str(e)}")
+            print (f"Error in _plot_gaussian_mixture: {str (e)}")
             raise
 
-    def _plot_ellipse(self, mean, cov, alpha=0.5):
+    @staticmethod
+    def _plot_ellipse(mean, cov, alpha=0.5):
         try:
             # Calculate the eigenvectors and eigenvalues
-            eig_vals, eig_vecs = np.linalg.eig(cov)
+            eig_vals, eig_vecs = np.linalg.eig (cov)
 
             # Get the major and minor axes
-            major_axis = np.argmax(eig_vals)
+            major_axis = np.argmax (eig_vals)
             minor_axis = 1 - major_axis
 
             # Calculate the angle of rotation
-            angle = np.degrees(np.arctan(eig_vecs[major_axis, 1] / eig_vecs[major_axis, 0]))
+            angle = np.degrees (np.arctan (eig_vecs [major_axis, 1] / eig_vecs [major_axis, 0]))
 
             # Create the ellipse
             ellipse = Ellipse
 
-            plt.gca().add_patch(ellipse)
+            plt.gca ().add_patch (ellipse)
 
         except Exception as e:
-            print(f"Error in _plot_ellipse: {str(e)}")
+            print (f"Error in _plot_ellipse: {str (e)}")
             raise

@@ -48,7 +48,7 @@ def get_linear_config():
 
 
 def get_linear_regression_config():
-    """Get optimized configuration for a linear regression model."""
+    """Get configuration for a simple linear regression model."""
     return {
         "model": {
             "type": "regression",
@@ -57,29 +57,19 @@ def get_linear_regression_config():
             "task": "regression"
         },
         "training": {
-            "learning_rate": 0.01,
+            "learning_rate": 1,
             "epochs": 100,
-            "batch_size": 32,
-            "early_stopping": True,
-            "patience": 10
+            "batch_size": 32
         },
         "optimization": {
-            "optimizer": "adam",
-            "scheduler": "cosine",
-            "weight_decay": 0.001,
-            "min_lr": 1e-6,
-            "gradient_clip_val": 1.0,
-            "mixed_precision": True
+            "optimizer": "adam"
         },
         "data": {
             "batch_size": 32,
-            "num_workers": 7,
-            "pin_memory": True
+            "num_workers": 4
         },
         "logging": {
-            "tensorboard": True,
-            "log_every_n_steps": 10,
-            "metrics": ["mse", "r2"]
+            "tensorboard": False
         }
     }
 
