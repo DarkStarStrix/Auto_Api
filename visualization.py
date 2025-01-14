@@ -1,142 +1,26 @@
 # visualization.py
 import os
-import matplotlib.pyplot as plt
-import matplotlib.colors as ListedColormap
+import traceback
+
 import matplotlib.colors as Ellipse
+import matplotlib.colors as ListedColormap
+import matplotlib.pyplot as plt
 import numpy as np
+import pydot
+import seaborn as sns
 import torch
 from pytorch_lightning.callbacks import Callback
-from sklearn.metrics import silhouette_score
-import seaborn
-import traceback
+from sklearn.metrics import confusion_matrix
 from sklearn.tree import export_graphviz
-import graphviz
-import pydotplus
-import pydot
 
 
-class LogisticRegressionVisualizer (Callback):
-    """Visualization callback for logistic regression."""
-
-    def __init__(self, log_dir: str = "training_plots/logistic_regression"):
-        super ().__init__ ()
-        self.log_dir = log_dir
-        os.makedirs (log_dir, exist_ok=True)
-        self.predictions = []
-        self.actuals = []
-        self.probabilities = []
-        self.accuracies = []
-        self.precisions = []
-        self.recalls = []
-        self.training_losses = []
-        self.validation_losses = []
-
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
-        """Collect predictions and actual values."""
-        x, y = batch
-        with torch.no_grad ():
-            probs = pl_module (x)
-            preds = (probs > 0.5).float ()
-
-            self.predictions.extend (preds.cpu ().numpy ().flatten ())
-            self.actuals.extend (y.cpu ().numpy ().flatten ())
-            self.probabilities.extend (probs.cpu ().numpy ().flatten ())
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        """Plot visualizations at the end of each epoch."""
-        metrics = trainer.callback_metrics
-
-        # Collect metrics
-        self.accuracies.append (metrics.get ('accuracy', 0).item ())
-        self.precisions.append (metrics.get ('precision', 0).item ())
-        self.recalls.append (metrics.get ('recall', 0).item ())
-        self.training_losses.append (metrics.get ('train_loss', 0).item ())
-        self.validation_losses.append (metrics.get ('val_loss', 0).item ())
-
-        # Create plots
-        self._plot_metrics_over_time ()
-        self._plot_probability_distribution ()
-        self._plot_custom_confusion_matrix ()
-
-        # Clear batch data
-        self.predictions = []
-        self.actuals = []
-        self.probabilities = []
-
-    def _plot_metrics_over_time(self):
-        """Plot accuracy, precision, and recall over time."""
-        plt.figure (figsize=(12, 6))
-        epochs = range (1, len (self.accuracies) + 1)
-
-        plt.plot (epochs, self.accuracies, 'b-', label='Accuracy')
-        plt.plot (epochs, self.precisions, 'g-', label='Precision')
-        plt.plot (epochs, self.recalls, 'r-', label='Recall')
-
-        plt.title ('Classification Metrics Over Time')
-        plt.xlabel ('Epoch')
-        plt.ylabel ('Score')
-        plt.legend ()
-        plt.grid (True)
-        plt.savefig (os.path.join (self.log_dir, 'metrics_over_time.png'))
-        plt.close ()
-
-    def _plot_probability_distribution(self):
-        """Plot distribution of predicted probabilities."""
-        if len (self.probabilities) > 0:
-            plt.figure (figsize=(10, 6))
-            plt.hist (self.probabilities, bins=50, edgecolor='black')
-            plt.title ('Distribution of Predicted Probabilities')
-            plt.xlabel ('Predicted Probability')
-            plt.ylabel ('Count')
-            plt.grid (True)
-            plt.savefig (os.path.join (self.log_dir, 'probability_distribution.png'))
-            plt.close ()
-
-    def _plot_custom_confusion_matrix(self):
-        """Plot simplified confusion matrix."""
-        if len (self.actuals) > 0:
-            # Calculate confusion matrix manually
-            predictions = np.array (self.predictions)
-            actuals = np.array (self.actuals)
-
-            tp = np.sum ((predictions == 1) & (actuals == 1))
-            tn = np.sum ((predictions == 0) & (actuals == 0))
-            fp = np.sum ((predictions == 1) & (actuals == 0))
-            fn = np.sum ((predictions == 0) & (actuals == 1))
-
-            cm = np.array ([[tn, fp], [fn, tp]])
-
-            plt.figure (figsize=(8, 6))
-            plt.imshow (cm, interpolation='nearest', cmap='Blues')
-            plt.title ('Confusion Matrix')
-            plt.colorbar ()
-
-            classes = ['Negative', 'Positive']
-            tick_marks = np.arange (len (classes))
-            plt.xticks (tick_marks, classes)
-            plt.yticks (tick_marks, classes)
-
-            # Add text annotations
-            for i in range (2):
-                for j in range (2):
-                    plt.text (j, i, str (cm [i, j]),
-                              horizontalalignment="center",
-                              color="white" if cm [i, j] > cm.max () / 2 else "black")
-
-            plt.xlabel ('Predicted label')
-            plt.ylabel ('True label')
-            plt.tight_layout ()
-            plt.savefig (os.path.join (self.log_dir, 'confusion_matrix.png'))
-            plt.close ()
-
-
-class LinearRegressionVisualizer (Callback):
+class LinearRegressionVisualizer(Callback):
     """Visualization callback for linear regression."""
 
-    def __init__(self, log_dir: str = "training_plots/linear_regression", feature_names: list = None, **kwargs):
-        super ().__init__ ()
+    def __init__(self, log_dir: str = "training_plots/linear_regression", feature_names: list = None):
+        super().__init__()
         self.log_dir = log_dir
-        os.makedirs (log_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)
         self.predictions = []
         self.actuals = []
         self.mse_scores = []
@@ -145,33 +29,31 @@ class LinearRegressionVisualizer (Callback):
         self.validation_losses = []
         self.residuals = []
         self.feature_names = feature_names if feature_names else ["Feature", "Target"]
-        self.kwargs = kwargs  # Store additional arguments
 
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
         """Collect predictions and actual values."""
         x, y = batch
-        with torch.no_grad ():
-            preds = pl_module (x)
-
-            self.predictions.extend (preds.cpu ().numpy ().flatten ())
-            self.actuals.extend (y.cpu ().numpy ().flatten ())
-            self.residuals.extend ((preds - y).cpu ().numpy ().flatten ())
+        with torch.no_grad():
+            preds = pl_module(x)
+            self.predictions.extend(preds.cpu().numpy().flatten())
+            self.actuals.extend(y.cpu().numpy().flatten())
+            self.residuals.extend((preds - y).cpu().numpy().flatten())
 
     def on_train_epoch_end(self, trainer, pl_module):
         """Plot visualizations at the end of each epoch."""
         metrics = trainer.callback_metrics
 
         # Collect metrics
-        self.mse_scores.append (metrics.get ('mse', 0).item ())
-        self.r2_scores.append (metrics.get ('r2_score', 0).item ())
-        self.training_losses.append (metrics.get ('train_loss', 0).item ())
-        self.validation_losses.append (metrics.get ('val_loss', 0).item ())
+        self.mse_scores.append(metrics.get('mse', 0).item())
+        self.r2_scores.append(metrics.get('r2_score', 0).item())
+        self.training_losses.append(metrics.get('train_loss', 0).item())
+        self.validation_losses.append(metrics.get('val_loss', 0).item())
 
         # Create plots
-        self._plot_metrics_over_time ()
-        self._plot_residuals ()
-        self._plot_predictions_vs_actual ()
-        self._plot_residual_distribution ()
+        self._plot_metrics_over_time()
+        self._plot_residuals()
+        self._plot_predictions_vs_actual()
+        self._plot_residual_distribution()
 
         # Clear batch data
         self.predictions = []
@@ -180,70 +62,185 @@ class LinearRegressionVisualizer (Callback):
 
     def _plot_metrics_over_time(self):
         """Plot MSE and R² score over time."""
-        plt.figure (figsize=(15, 5))
-        epochs = range (1, len (self.mse_scores) + 1)
+        plt.figure(figsize=(15, 5))
+        epochs = range(1, len(self.mse_scores) + 1)
 
-        plt.subplot (1, 2, 1)
-        plt.plot (epochs, self.mse_scores, 'r-')
-        plt.title ('Mean Squared Error Over Time')
-        plt.xlabel ('Epoch')
-        plt.ylabel ('MSE')
-        plt.grid (True)
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs, self.mse_scores, 'r-')
+        plt.title('Mean Squared Error Over Time')
+        plt.xlabel('Epoch')
+        plt.ylabel('MSE')
+        plt.grid(True)
 
-        plt.subplot (1, 2, 2)
-        plt.plot (epochs, self.r2_scores, 'b-')
-        plt.title ('R² Score Over Time')
-        plt.xlabel ('Epoch')
-        plt.ylabel ('R²')
-        plt.grid (True)
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs, self.r2_scores, 'b-')
+        plt.title('R² Score Over Time')
+        plt.xlabel('Epoch')
+        plt.ylabel('R²')
+        plt.grid(True)
 
-        plt.tight_layout ()
-        plt.savefig (os.path.join (self.log_dir, 'metrics_over_time.png'))
-        plt.close ()
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.log_dir, 'metrics_over_time.png'))
+        plt.close()
 
     def _plot_residuals(self):
         """Plot residuals over time."""
-        plt.figure (figsize=(10, 6))
-        epochs = range (1, len (self.residuals) + 1)
-        plt.plot (epochs, self.residuals, 'g-')
-        plt.title ('Residuals Over Time')
-        plt.xlabel ('Epoch')
-        plt.ylabel ('Residual Value')
-        plt.grid (True)
-        plt.savefig (os.path.join (self.log_dir, 'residuals.png'))
-        plt.close ()
+        plt.figure(figsize=(10, 6))
+        epochs = range(1, len(self.residuals) + 1)
+        plt.plot(epochs, self.residuals, 'g-')
+        plt.title('Residuals Over Time')
+        plt.xlabel('Epoch')
+        plt.ylabel('Residual Value')
+        plt.grid(True)
+        plt.savefig(os.path.join(self.log_dir, 'residuals.png'))
+        plt.close()
 
     def _plot_predictions_vs_actual(self):
         """Plot predicted vs actual values."""
         if len (self.predictions) > 0:
             plt.figure (figsize=(10, 6))
             plt.scatter (self.actuals, self.predictions, alpha=0.5)
+            self.feature_names = self.feature_names if self.feature_names else ["Actual Value", "Predicted Value"]
 
             min_val = min (min (self.actuals), min (self.predictions))
             max_val = max (max (self.actuals), max (self.predictions))
             plt.plot ([min_val, max_val], [min_val, max_val], 'r--')
 
             plt.title ('Predictions vs Actual Values')
-            plt.xlabel (self.feature_names [1])
-            plt.ylabel (self.feature_names [0])
+            plt.xlabel (self.feature_names [0])
+            plt.ylabel (self.feature_names [1])
+
             plt.grid (True)
             plt.savefig (os.path.join (self.log_dir, 'predictions_vs_actual.png'))
             plt.close ()
 
     def _plot_residual_distribution(self):
         """Plot distribution of residuals."""
-        if len (self.residuals) > 0:
-            plt.figure (figsize=(10, 6))
-            plt.hist (self.residuals, bins=50, edgecolor='black')
-            plt.title ('Distribution of Residuals')
-            plt.xlabel ('Residual Value')
-            plt.ylabel ('Count')
-            plt.grid (True)
-            plt.savefig (os.path.join (self.log_dir, 'residual_distribution.png'))
-            plt.close ()
+        if len(self.residuals) > 0:
+            plt.figure(figsize=(10, 6))
+            plt.hist(self.residuals, bins=50, edgecolor='black')
+            plt.title('Distribution of Residuals')
+            plt.xlabel('Residual Value')
+            plt.ylabel('Count')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.log_dir, 'residual_distribution.png'))
+            plt.close()
 
 
-visualizer = LinearRegressionVisualizer (feature_names=["TV", "Sales"])
+class LogisticRegressionVisualizer(Callback):
+    """Visualization callback for logistic regression."""
+
+    def __init__(self, log_dir: str = "training_plots/logistic_regression", feature_names: list = None):
+        super().__init__()
+        self.log_dir = log_dir
+        os.makedirs(log_dir, exist_ok=True)
+        self.predictions = []
+        self.actuals = []
+        self.probabilities = []
+        self.accuracies = []
+        self.precisions = []
+        self.recalls = []
+        self.training_losses = []
+        self.validation_losses = []
+        self.feature_names = feature_names if feature_names else ["Feature", "Target"]
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
+        """Collect predictions and actual values."""
+        x, y = batch
+        with torch.no_grad():
+            probs = pl_module(x)
+            preds = (probs > 0.5).float()
+
+            self.predictions.extend(preds.cpu().numpy().flatten())
+            self.actuals.extend(y.cpu().numpy().flatten())
+            self.probabilities.extend(probs.cpu().numpy().flatten())
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        """Plot visualizations at the end of each epoch."""
+        metrics = trainer.callback_metrics
+
+        # Collect metrics
+        self.accuracies.append(metrics.get('accuracy', 0).item())
+        self.precisions.append(metrics.get('precision', 0).item())
+        self.recalls.append(metrics.get('recall', 0).item())
+        self.training_losses.append(metrics.get('train_loss', 0).item())
+        self.validation_losses.append(metrics.get('val_loss', 0).item())
+
+        # Create plots
+        self._plot_metrics_over_time()
+        self._plot_probability_distribution()
+        self._plot_custom_confusion_matrix()
+
+        # Clear batch data
+        self.predictions = []
+        self.actuals = []
+        self.probabilities = []
+
+    def _plot_metrics_over_time(self):
+        """Plot accuracy, precision, and recall over time."""
+        plt.figure(figsize=(12, 6))
+        epochs = range(1, len(self.accuracies) + 1)
+
+        plt.plot(epochs, self.accuracies, 'b-', label='Accuracy')
+        plt.plot(epochs, self.precisions, 'g-', label='Precision')
+        plt.plot(epochs, self.recalls, 'r-', label='Recall')
+
+        plt.title('Classification Metrics Over Time')
+        plt.xlabel('Epoch')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.log_dir, 'metrics_over_time.png'))
+        plt.close()
+
+    def _plot_probability_distribution(self):
+        """Plot distribution of predicted probabilities."""
+        if len(self.probabilities) > 0:
+            plt.figure(figsize=(10, 6))
+            plt.hist(self.probabilities, bins=50, edgecolor='black')
+            plt.title('Distribution of Predicted Probabilities')
+            plt.xlabel('Predicted Probability')
+            plt.ylabel('Count')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.log_dir, 'probability_distribution.png'))
+            plt.close()
+
+    def _plot_custom_confusion_matrix(self):
+        """Plot simplified confusion matrix."""
+        if len(self.actuals) > 0:
+            # Calculate confusion matrix manually
+            predictions = np.array(self.predictions)
+            actuals = np.array(self.actuals)
+
+            tp = np.sum((predictions == 1) & (actuals == 1))
+            tn = np.sum((predictions == 0) & (actuals == 0))
+            fp = np.sum((predictions == 1) & (actuals == 0))
+            fn = np.sum((predictions == 0) & (actuals == 1))
+
+            cm = np.array([[tn, fp], [fn, tp]])
+
+            plt.figure(figsize=(8, 6))
+            plt.imshow(cm, interpolation='nearest', cmap='Blues')
+            plt.title('Confusion Matrix')
+            plt.colorbar()
+
+            classes = ['Negative', 'Positive']
+            tick_marks = np.arange(len(classes))
+            plt.xticks(tick_marks, classes)
+            plt.yticks(tick_marks, classes)
+
+            # Add text annotations
+            for i in range(2):
+                for j in range(2):
+                    plt.text(j, i, str(cm[i, j]),
+                             horizontalalignment="center",
+                             color="white" if cm[i, j] > cm.max() / 2 else "black")
+
+            plt.xlabel('Predicted label')
+            plt.ylabel('True label')
+            plt.tight_layout()
+            plt.savefig(os.path.join(self.log_dir, 'confusion_matrix.png'))
+            plt.close()
 
 
 class NaiveBayesVisualizer (Callback):
@@ -352,7 +349,7 @@ class DecisionTreeVisualizer (Callback):
 
         self._plot_accuracy_curve ()
         self._plot_feature_importance ()
-        self._plot_decision_boundaries (trainer, pl_module)
+        self._plot_decision_boundaries (pl_module)
 
         self.predictions = []
         self.actuals = []
@@ -382,7 +379,7 @@ class DecisionTreeVisualizer (Callback):
             plt.savefig (os.path.join (self.log_dir, 'feature_importance.png'))
             plt.close ()
 
-    def _plot_decision_boundaries(self, trainer, pl_module):
+    def _plot_decision_boundaries(self, pl_module):
         if pl_module.n_features == 2:
             x_min, x_max = -3, 3
             y_min, y_max = -3, 3
@@ -858,7 +855,7 @@ class SVMVisualizer (Callback):
         plt.savefig (os.path.join (self.log_dir, 'loss.png'))
         plt.close ()
 
-    def plot_decision_boundary(model, X, y):
+    def plot_decision_boundary(self, X, y, Z=None):
         # Define the mesh grid
         x_min, x_max = X [:, 0].min () - 1, X [:, 0].max () + 1
         y_min, y_max = X [:, 1].min () - 1, X [:, 1].max () + 1
@@ -866,7 +863,7 @@ class SVMVisualizer (Callback):
                               np.arange (y_min, y_max, 0.01))
 
         # Predict the function value for the whole grid
-        Z = model.predict (np.c_ [xx.ravel (), yy.ravel ()])
+        self.predict (np.c_ [xx.ravel (), yy.ravel ()])
         Z = Z.reshape (xx.shape)
 
         # Plot the contour and training examples
@@ -876,6 +873,9 @@ class SVMVisualizer (Callback):
         plt.ylim (yy.min (), yy.max ())
         plt.title ("Decision Boundary")
         plt.show ()
+
+    def predict(self, param):
+        pass
 
 
 class GaussianMixtureVisualizer (Callback):
@@ -889,6 +889,7 @@ class GaussianMixtureVisualizer (Callback):
             'gaussian_mixture': []
         }
 
+   # this is the function called at the end of each epoch
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
         pass
 
@@ -908,11 +909,11 @@ class GaussianMixtureVisualizer (Callback):
 
             self._plot_metrics ()
 
-            if trainer.datamodule is not None:
+            if trainer.datamodule is None:
+                print ("Error: datamodule is None")
+            else:
                 X = trainer.datamodule.train_dataloader ().dataset.tensors [0]
                 self._plot_gaussian_mixture (pl_module.model, X)
-            else:
-                print ("Error: datamodule is None")
 
         except Exception as e:
             print (f"Error in visualization: {str (e)}")
@@ -943,9 +944,8 @@ class GaussianMixtureVisualizer (Callback):
 
             # Plot the Gaussian Mixture components
             for i in range (model.n_components):
-                mean = model.means_ [i]
                 cov = model.covariances_ [i]
-                self._plot_ellipse (mean, cov, alpha=0.5)
+                self._plot_ellipse (cov)
 
             plt.title ('Gaussian Mixture Model')
             plt.xlabel ('Feature 1')
@@ -959,17 +959,17 @@ class GaussianMixtureVisualizer (Callback):
             raise
 
     @staticmethod
-    def _plot_ellipse(mean, cov, alpha=0.5):
+    def _plot_ellipse(cov):
         try:
             # Calculate the eigenvectors and eigenvalues
             eig_vals, eig_vecs = np.linalg.eig (cov)
 
             # Get the major and minor axes
             major_axis = np.argmax (eig_vals)
-            minor_axis = 1 - major_axis
+            1 - major_axis
 
             # Calculate the angle of rotation
-            angle = np.degrees (np.arctan (eig_vecs [major_axis, 1] / eig_vecs [major_axis, 0]))
+            np.degrees (np.arctan (eig_vecs [major_axis, 1] / eig_vecs [major_axis, 0]))
 
             # Create the ellipse
             ellipse = Ellipse
