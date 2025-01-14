@@ -845,7 +845,7 @@ def get_pinn_config():
             "weight_decay": 0.01,
             "min_lr": 1e-7,
             "gradient_clip_val": 1.0,
-            "mixed_precision": True  # Utilize mixed precision for efficiency
+            "mixed_precision": True  # Use mixed precision for efficiency
         },
         "data": {
             "batch_size": 16,
@@ -863,3 +863,63 @@ def get_pinn_config():
         }
     }
 
+def get_deep_learning_config():
+    return {
+        "model": {
+            "type": "cnn",  # Example model type
+            "input_dim": (1, 28, 28),  # Example input dimensions for an image
+            "output_dim": 10,  # Number of classes for classification
+            "hidden_layers": [32, 64],  # Example hidden layers for CNN
+            "activation": "relu",
+            "dropout_rate": 0.5,
+            "task": "classification"  # or "regression"
+        },
+        "training": {
+            "batch_size": 64,
+            "epochs": 100,
+            "learning_rate": 0.001,
+            "early_stopping": True,
+            "early_stopping_patience": 10,
+            "validation_split": 0.2
+        },
+        "preprocessing": {
+            "scaling": "standard",
+            "handle_missing": "mean",
+            "dimensionality_reduction": {
+                "method": None,
+                "n_components": None
+            },
+            "feature_selection": None
+        },
+        "evaluation": {
+            "metrics": [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1"
+            ]
+        },
+        "logging": {
+            "tensorboard": True,
+            "log_interval": 10,
+            "save_visualizations": True,
+            "visualization_types": [
+                "training_loss",
+                "validation_loss"
+            ],
+            "export_results": {
+                "save_metrics": True
+            }
+        },
+        "hyperparameter_search": {
+            "enabled": False,
+            "method": "grid",
+            "param_grid": {
+                "hidden_layers": [[32, 64], [64, 128]],
+                "learning_rate": [0.001, 0.0001],
+                "dropout_rate": [0.5, 0.3]
+            },
+            "n_trials": 10,
+            "metric": "accuracy"
+        }
+    }

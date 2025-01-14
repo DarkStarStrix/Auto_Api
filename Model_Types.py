@@ -10,30 +10,27 @@ import lightgbm as lgb
 from sklearn.ensemble import RandomForestClassifier
 
 
-class BaseModel (pl.LightningModule):
-    def __init__(self, config: Dict [str, Any]):
-        super ().__init__ ()
+class BaseModel(pl.LightningModule):
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__()
         self.config = config
-        self.save_hyperparameters (config)
-        self.model = self._create_model ()
+        self.save_hyperparameters(config)
+        self.model = self._create_model()
 
     def forward(self, x):
-        return self.model (x)
+        return self.model(x)
 
     def configure_optimizers(self):
-        return torch.optim.Adam (
-            self.parameters (),
-            lr=self.config ['training'].get ('learning_rate', 0.001)
-        )
+        return torch.optim.Adam(self.parameters(), lr=self.config['training']['learning_rate'])
 
     def training_step(self, batch, batch_idx):
-        loss = self._compute_loss (batch)
-        self.log ('train_loss', loss, prog_bar=True)
+        loss = self._compute_loss(batch)
+        self.log('train_loss', loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self._compute_loss (batch)
-        self.log ('val_loss', loss, prog_bar=True)
+        loss = self._compute_loss(batch)
+        self.log('val_loss', loss, prog_bar=True)
         return loss
 
 
@@ -200,10 +197,10 @@ class DecisionTreeModel (nn.Module):
         predictions = self._traverse_tree (x)
         return torch.softmax (predictions, dim=1)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         return self._compute_loss (batch)
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch):
         return self._compute_loss (batch)
 
     def _compute_loss(self, batch):
@@ -227,7 +224,8 @@ class DecisionTreeModel (nn.Module):
     def configure_optimizers(self):
         return torch.optim.Adam (self.parameters (), lr=self.learning_rate)
 
-    def configure_callbacks(self):
+    @staticmethod
+    def configure_callbacks():
         return [DecisionTreeVisualizer ()]
 
 
@@ -562,3 +560,43 @@ class GaussianMixtureModel (pl.LightningModule):
 
     def configure_callbacks(self):
         return [GaussianMixtureVisualizer ()]
+
+# Deep Learning Module
+class CNNModel(BaseModel):
+    def _create_model(self):
+        layers = []
+        input_channels = self.config['model']['input_dim'][0]
+        for hidden_layer in self.config['model']['hidden_layers']:
+            layers.append(nn.Conv2d(input_channels, hidden_layer, kernel_size=3, padding=1))
+            layers.append(nn.ReLU())
+            layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+            input_channels = hidden_layer
+        layers.append(nn.Flatten())
+        layers.append(nn.Linear(input_channels * (self.config['model']['input_dim'][1] // 2**len(self.config['model']['hidden_layers']))**2, self.config['model']['output_dim']))
+        return nn.Sequential(*layers)
+
+    def _compute_loss(self, batch):
+        x, y = batch
+        y_hat = self(x)
+        return nn.CrossEntropyLoss()(y_hat, y)
+
+class RNNModel(BaseModel):
+    def _create_model(self):
+        return nn.Sequential(
+            nn.RNN(self.config['model']['input_dim'], self.config['model']['hidden_layers'][0], batch_first=True),
+            nn.Linear(self.config['model']['hidden_layers'][0], self.config['model']['output_dim'])
+        )
+
+    def _compute_loss(self, batch):
+        x, y = batch
+        y_hat, _ = self(x)
+        return nn.CrossEntropyLoss()(y_hat[:, -1, :], y)
+
+def load_model(config):
+    model_type = config['model']['type']
+    if model_type == 'cnn':
+        return CNNModel(config)
+    elif model_type == 'rnn':
+        return RNNModel(config)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
