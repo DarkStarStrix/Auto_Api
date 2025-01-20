@@ -141,11 +141,6 @@ def get_custom_config():
    - Add tests
    - Submit pull request
 
-## 🎯 Logo
-<div style="text-align: center;">
-  <img src="Auto_API.png" alt="Auto API Architecture" style="width:50%;"/>
-</div>
-
 ## 📝 License
 
 This project is licensed under the MIT License—see the LICENSE file for details.
