@@ -23,23 +23,18 @@ def create_model(config: Dict [str, Any]):
 def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
     """Train a model with the given data and configuration."""
     try:
-        # Clear any existing tensors from GPU memory
         if torch.cuda.is_available ():
             torch.cuda.empty_cache ()
         gc.collect ()
 
-        # Convert data to tensors (on CPU)
         X_tensor = torch.FloatTensor (X)
-        y_tensor = torch.FloatTensor (y.reshape (-1, 1))  # Reshape for linear regression
+        y_tensor = torch.FloatTensor (y.reshape (-1, 1))
 
-        # Create dataset
         dataset = data.TensorDataset (X_tensor, y_tensor)
 
-        # Create data loaders with optimized settings
         train_size = int (0.8 * len (dataset))
         val_size = len (dataset) - train_size
 
-        # Use a fixed seed for reproducibility
         generator = torch.Generator ().manual_seed (42)
 
         train_dataset, val_dataset = data.random_split (
@@ -48,7 +43,6 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
             generator=generator
         )
 
-        # Optimized DataLoader settings
         dataloader_kwargs = {
             'batch_size': config ['training'].get ('batch_size', 32),
             'num_workers': 0,
@@ -68,10 +62,8 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
             **dataloader_kwargs
         )
 
-        # Create model
         model = create_model (config)
 
-        # Configure trainer with memory optimizations
         trainer = pl.Trainer (
             max_epochs=config ['training'].get ('epochs', 10),
             accelerator="auto",
@@ -89,7 +81,6 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
             precision=32,
         )
 
-        # Train model
         trainer.fit (model, train_loader, val_loader)
 
         return model
@@ -102,25 +93,20 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict [str, Any]):
 def main():
     """Main function to run the training."""
     try:
-        # Set random seeds for reproducibility
         torch.manual_seed (42)
         np.random.seed (42)
         if torch.cuda.is_available ():
             torch.cuda.manual_seed (42)
 
-        # Generate sample data for linear regression
         X = np.random.randn (500, 10)  # Features
-        # Create target variable with linear relationship plus noise
         true_coefficients = np.random.randn (10)
         y = np.dot (X, true_coefficients) + np.random.normal (0, 0.1, size=500)
 
-        # Get and update config
-        config = get_linear_regression_config ()  # Changed to linear regression config
+        config = get_linear_regression_config ()
         config ['model'] ['input_dim'] = X.shape [1]
-        config ['model'] ['output_dim'] = 1  # Linear regression has single output
-        config ['model'] ['type'] = 'linear_regression'  # Ensure the correct model type
+        config ['model'] ['output_dim'] = 1
+        config ['model'] ['type'] = 'linear_regression'
 
-        # Add memory optimization settings
         config ['training'].update ({
             'batch_size': 16,
             'gradient_clip_val': 0.5,
@@ -132,7 +118,6 @@ def main():
         model = train_model (X, y, config)
         print ("Training completed successfully!")
 
-        # Save the model
         save_path = 'models'
         os.makedirs (save_path, exist_ok=True)
         torch.save (
@@ -145,7 +130,6 @@ def main():
         print (f"Error in main: {str (e)}")
         raise
     finally:
-        # Cleanup
         if torch.cuda.is_available ():
             torch.cuda.empty_cache ()
         gc.collect ()

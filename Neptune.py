@@ -36,7 +36,6 @@ class NeptuneModelTracker (Callback):
         if "accuracy" in metrics:
             self.run ["metrics/val/accuracy"].append (metrics ["accuracy"])
 
-        # Generate and log confusion matrix
         if hasattr (pl_module, "predictions") and hasattr (pl_module, "targets"):
             fig = plt.figure (figsize=(8, 8))
             sns.heatmap (pl_module.confusion_matrix (), annot=True, fmt="d")
@@ -45,12 +44,10 @@ class NeptuneModelTracker (Callback):
             plt.close ()
 
     def on_train_end(self, trainer, pl_module):
-        # Save final model metrics
         self.run ["final_metrics"] = {
             "best_val_loss": min (self.val_metrics.get ("val_loss", [float ('inf')]))
         }
 
-        # Save model artifacts
         model_path = "model.pt"
         torch.save (pl_module.state_dict (), model_path)
         self.run ["model/checkpoints"].upload (model_path)
@@ -63,13 +60,11 @@ class NeptuneModelTracker (Callback):
             self.run.stop ()
 
 
-# Example usage with AutoML
 class AutoML:
     def __init__(self, config: Dict [str, Any]):
         self.config = config
         self.model = self._create_model ()
 
-        # Initialize Neptune tracking
         self.neptune_tracker = NeptuneModelTracker (
             api_token=os.getenv ("NEPTUNE_API_TOKEN"),
             project=os.getenv ("NEPTUNE_PROJECT")

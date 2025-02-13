@@ -1,11 +1,11 @@
-import optuna
-from torch.quantization import quantize_dynamic
-import torch
 from typing import Dict, Any, Optional
+
+import optuna
 import pytorch_lightning as pl
-from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
-import numpy as np
+import torch
 from pytorch_lightning.callbacks import EarlyStopping
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
+from torch.quantization import quantize_dynamic
 
 
 def quantize_model(model: torch.nn.Module) -> torch.nn.Module:
@@ -31,7 +31,6 @@ class ModelOptimizer:
         return study.best_params
 
     def _objective(self, trial) -> float:
-        # Hyperparameter search space
         config = self.base_config.copy ()
         config.update ({
             'learning_rate': trial.suggest_float ('learning_rate', 1e-5, 1e-1, log=True),
@@ -40,10 +39,9 @@ class ModelOptimizer:
             'weight_decay': trial.suggest_float ('weight_decay', 1e-5, 1e-2, log=True)
         })
 
-        # Training with validation
         model = self.model_class (config)
         trainer = pl.Trainer (
-            max_epochs=5,  # Short training for hyperparameter search
+            max_epochs=5,
             callbacks=[EarlyStopping (monitor='val_loss', patience=3)],
             enable_progress_bar=False
         )

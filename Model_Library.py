@@ -28,7 +28,7 @@ def get_linear_config():
         },
         "optimization": {
             "optimizer": "adam",
-            "scheduler": "cosine",  # Changed back to cosine for stability
+            "scheduler": "cosine",
             "weight_decay": 0.01,
             "min_lr": 1e-6,
             "gradient_clip_val": 1.0,
@@ -79,8 +79,8 @@ def get_logistic_regression_config():
     return {
         "model": {
             "type": "logistic_regression",
-            "input_dim": 10,  # Adjust based on your data
-            "output_dim": 1,  # Binary classification
+            "input_dim": 10,
+            "output_dim": 1,
             "task": "binary_classification"
         },
         "training": {
@@ -132,7 +132,7 @@ def get_logistic_regression_config():
         },
         "hyperparameters": {
             "weight_initialization": "xavier_uniform",
-            "dropout_rate": 0.0,  # Usually not needed for simple logistic regression
+            "dropout_rate": 0.0,
             "bias_init": 0.0
         }
     }
@@ -263,23 +263,20 @@ def get_CNN_RNN_config():
     """Configuration template for training basic CNN-RNN hybrid model."""
     return {
         "model": {
-            # CNN Parameters
-            "conv_layers": [32, 64, 128],  # Number of filters in each conv layer
+            "conv_layers": [32, 64, 128],
             "kernel_size": 3,
             "pool_size": 2,
             "cnn_activation": "relu",
 
-            # RNN Parameters
-            "rnn_type": "LSTM",  # LSTM or GRU
+            "rnn_type": "LSTM",
             "hidden_size": 128,
             "num_rnn_layers": 2,
             "bidirectional": True,
 
-            # General Architecture
             "input_channels": 1,
             "dropout_rate": 0.5,
             "final_dense_layers": [256, 128],
-            "output_size": 10  # Number of classes
+            "output_size": 10
         },
 
         "training": {
@@ -323,8 +320,8 @@ def get_decision_tree_config():
     return {
         "model": {
             "type": "decision_tree",
-            "input_dim": None,  # Set dynamically
-            "output_dim": None,  # Set dynamically
+            "input_dim": None,
+            "output_dim": None,
             "max_depth": 5,
             "min_samples_split": 2,
             "min_samples_leaf": 1,
@@ -340,7 +337,7 @@ def get_decision_tree_config():
             "patience": 3
         },
         "preprocessing": {
-            "scaling": None,  # Trees don't require scaling
+            "scaling": None,
             "handle_missing": "median",
             "handle_categorical": "label_encoding"
         },
@@ -357,10 +354,10 @@ def get_naive_bayes_config():
     return {
         "model": {
             "type": "naive_bayes",
-            "input_dim": None,  # Set dynamically based on data
-            "output_dim": None,  # Set dynamically based on data
-            "var_smoothing": 1e-9,  # Smoothing parameter
-            "priors": None,  # Class priors, None for automatic
+            "input_dim": None,
+            "output_dim": None,
+            "var_smoothing": 1e-9,
+            "priors": None,
             "task": "classification"
         },
         "training": {
@@ -388,88 +385,75 @@ def get_Thermodynamic_Diffusion_config():
     """Configuration template for training thermodynamic diffusion models."""
     return {
         "model": {
-            # Model Architecture
             "image_size": 28,
             "channels": 1,
             "time_embedding_dim": 256,
-            "model_channels": 64,  # Base channel multiplier
-            "channel_multipliers": [1, 2, 4, 8],  # For different U-Net levels
-            "num_res_blocks": 2,  # Number of residual blocks per level
-            "attention_levels": [2, 3],  # Which levels to apply attention
+            "model_channels": 64,
+            "channel_multipliers": [1, 2, 4, 8],
+            "num_res_blocks": 2,
+            "attention_levels": [2, 3],
             "dropout_rate": 0.1,
-            "num_heads": 4,  # Number of attention heads
+            "num_heads": 4,
 
-            # Diffusion Process
             "num_timesteps": 1000,
-            "beta_schedule": "linear",  # Options: linear, cosine, quadratic
+            "beta_schedule": "linear",
             "beta_start": 0.0001,
             "beta_end": 0.02,
 
-            # Ising Model Parameters
-            "temperature_schedule": "linear",  # How temperature changes during diffusion
+            "temperature_schedule": "linear",
             "initial_temperature": 0.1,
             "final_temperature": 2.0,
-            "coupling_constant": 1.0,  # J in Ising model
+            "coupling_constant": 1.0,
         },
 
         "training": {
-            # Training Process
             "num_epochs": 500,
             "save_interval": 5000,
             "eval_interval": 1000,
             "log_interval": 100,
             "sample_interval": 1000,
-            "num_samples": 64,  # Number of samples to generate during evaluation
+            "num_samples": 64,
 
-            # Loss Configuration
-            "loss_type": "l2",  # Options: l1, l2, huber
-            "loss_weight_type": "simple",  # Options: simple, snr, truncated
+            "loss_type": "l2",
+            "loss_weight_type": "simple",
 
-            # Sampling Configuration
-            "sampling_steps": 250,  # Steps for fast sampling (< num_timesteps)
+            "sampling_steps": 250,
             "clip_samples": True,
             "clip_range": [-1, 1],
         },
 
         "optimization": {
-            # Optimizer Configuration
-            "optimizer": "AdamW",  # Options: Adam, AdamW, RMSprop
+            "optimizer": "AdamW",
             "learning_rate": 2e-4,
             "weight_decay": 1e-4,
             "eps": 1e-8,
             "betas": (0.9, 0.999),
 
-            # Learning Rate Scheduling
-            "lr_schedule": "cosine",  # Options: cosine, linear, constant
+            "lr_schedule": "cosine",
             "warmup_steps": 5000,
             "min_lr": 1e-6,
 
-            # Gradient Configuration
             "grad_clip": 1.0,
-            "ema_decay": 0.9999,  # Exponential moving average of model weights
+            "ema_decay": 0.9999,
             "update_ema_interval": 1,
         },
 
         "data": {
-            # Data Configuration
-            "dataset": "MNIST",  # Dataset name
+            "dataset": "MNIST",
             "data_dir": "./data",
             "train_batch_size": 128,
             "eval_batch_size": 256,
 
-            # Data Processing
             "num_workers": 4,
             "pin_memory": True,
             "persistence": True,
 
-            # Augmentation
             "random_flip": False,
             "random_rotation": False,
             "normalize": True,
-            "rescale": [-1, 1],  # Range to rescale images to
+            "rescale": [-1, 1],
 
-            # Caching
-            "cache_size": 5000,  # Number of batches to cache in memory
+            "cache_size": 5000,
             "prefetch_factor": 2,
         }
     }
@@ -507,12 +491,12 @@ def get_kmeans_config():
     return {
         "model": {
             "type": "kmeans",
-            "input_dim": None,  # Set dynamically based on data
-            "n_clusters": 3,  # Number of clusters
-            "init_method": "kmeans++",  # Initialization method: 'random' or 'kmeans++'
+            "input_dim": None,
+            "n_clusters": 3,
+            "init_method": "kmeans++",
             "task": "clustering",
-            "distance_metric": "euclidean",  # Options: euclidean, manhattan, cosine
-            "seed": 42  # Random seed for reproducibility
+            "distance_metric": "euclidean",
+            "seed": 42
         },
         "training": {
             "batch_size": 64,
@@ -520,16 +504,16 @@ def get_kmeans_config():
             "learning_rate": 0.01,
             "early_stopping": True,
             "patience": 10,
-            "tolerance": 1e-4,  # Convergence criterion
-            "max_no_improvement": 5,  # Maximum iterations without improvement
+            "tolerance": 1e-4,
+            "max_no_improvement": 5,
             "validation_split": 0.2
         },
         "preprocessing": {
-            "scaling": "standard",  # Options: standard, minmax, robust, none
-            "handle_missing": "mean",  # Options: mean, median, most_frequent, constant
+            "scaling": "standard",
+            "handle_missing": "mean",
             "dimensionality_reduction": {
-                "method": None,  # Options: pca, tsne, umap, None
-                "n_components": None  # Set if using dimensionality reduction
+                "method": None,
+                "n_components": None
             },
             "feature_selection": None
         },
@@ -561,14 +545,14 @@ def get_kmeans_config():
         },
         "hyperparameter_search": {
             "enabled": False,
-            "method": "grid",  # Options: grid, random, bayesian
+            "method": "grid",
             "param_grid": {
                 "n_clusters": [2, 3, 4, 5, 6],
                 "init_method": ["kmeans++", "random"],
                 "learning_rate": [0.1, 0.01, 0.001]
             },
-            "n_trials": 10,  # Number of trials for random/bayesian search
-            "metric": "silhouette_score"  # Metric to optimize
+            "n_trials": 10,
+            "metric": "silhouette_score"
         }
     }
 
@@ -577,13 +561,13 @@ def get_lightgbm_config():
     return {
         "model": {
             "type": "lightgbm",
-            "input_dim": None,  # Set dynamically based on data
-            "output_dim": None,  # Set dynamically based on data
+            "input_dim": None,
+            "output_dim": None,
             "num_leaves": 31,
-            "max_depth": -1,  # -1 means no limit
+            "max_depth": -1,
             "min_data_in_leaf": 20,
             "boosting_type": "gbdt",
-            "objective": "multiclass",  # or "binary" for binary classification
+            "objective": "multiclass",
             "metric": ["multi_logloss", "multi_error"],
             "task": "classification"
         },
@@ -598,8 +582,8 @@ def get_lightgbm_config():
             "verbose_eval": 10
         },
         "preprocessing": {
-            "scaling": None,  # LightGBM handles this internally
-            "handle_missing": "default",  # LightGBM handles missing values
+            "scaling": None,
+            "handle_missing": "default",
             "categorical_features": [],
             "feature_selection": None
         },
@@ -632,8 +616,8 @@ def get_random_forest_config():
     return {
         "model": {
             "type": "random_forest",
-            "input_dim": None,  # Set dynamically based on data
-            "output_dim": None,  # Set dynamically based on data
+            "input_dim": None,
+            "output_dim": None,
             "n_estimators": 100,
             "max_depth": None,
             "task": "classification"
@@ -694,8 +678,8 @@ def get_svm_config():
     return {
         "model": {
             "type": "svm",
-            "input_dim": None,  # Set dynamically based on data
-            "output_dim": None,  # Set dynamically based on data
+            "input_dim": None,
+            "output_dim": None,
             "kernel": "rbf",
             "C": 1.0,
             "task": "classification"
@@ -755,7 +739,7 @@ def get_gmm_config():
     return {
         "model": {
             "type": "gmm",
-            "input_dim": None,  # Set dynamically based on data
+            "input_dim": None,
             "n_components": 3,
             "covariance_type": "full",
             "task": "clustering"
@@ -815,15 +799,15 @@ def get_pinn_config():
     """Get optimized configuration for a physics-inspired neural network (PINN) with sparse data processing."""
     return {
         "model": {
-            "type": "quantum_tomography",  # Specific to the task
-            "input_dim": 100,  # Adjust based on the sparse data format
-            "hidden_dim": 512,  # Larger hidden dimension for more expressive power
-            "output_dim": 100,  # Reconstructed density matrix dimension
+            "type": "quantum_tomography",
+            "input_dim": 100,
+            "hidden_dim": 512,
+            "output_dim": 100,
             "task": "reconstruction",
             "architecture": {
                 "dropout_rate": 0.2,
                 "activation": "relu",
-                "num_layers": 5,  # Deeper network to capture complex relations
+                "num_layers": 5,
                 "batch_norm": True,
                 "physics_constraints": {
                     "trace_constraint": True,
@@ -835,25 +819,25 @@ def get_pinn_config():
         "training": {
             "learning_rate": 0.001,
             "epochs": 50,
-            "batch_size": 16,  # Smaller batch size to handle sparse data
+            "batch_size": 16,
             "early_stopping": True,
             "patience": 10
         },
         "optimization": {
-            "optimizer": "adamw",  # AdamW for better weight regularization
-            "scheduler": "reduce_on_plateau",  # Adaptive learning rate
+            "optimizer": "adamw",
+            "scheduler": "reduce_on_plateau",
             "weight_decay": 0.01,
             "min_lr": 1e-7,
             "gradient_clip_val": 1.0,
-            "mixed_precision": True  # Use mixed precision for efficiency
+            "mixed_precision": True
         },
         "data": {
             "batch_size": 16,
-            "num_workers": 4,  # Fewer workers for smaller batches
+            "num_workers": 4,
             "pin_memory": True,
             "sparse_handling": {
-                "library": "torch_sparse",  # Example: PyTorch Sparse Tensor library
-                "format": "CSR"  # Compressed Sparse Row format
+                "library": "torch_sparse",
+                "format": "CSR"
             }
         },
         "logging": {
@@ -866,13 +850,13 @@ def get_pinn_config():
 def get_deep_learning_config():
     return {
         "model": {
-            "type": "cnn",  # Example model type
-            "input_dim": (1, 28, 28),  # Example input dimensions for an image
-            "output_dim": 10,  # Number of classes for classification
-            "hidden_layers": [32, 64],  # Example hidden layers for CNN
+            "type": "cnn",
+            "input_dim": (1, 28, 28),
+            "output_dim": 10,
+            "hidden_layers": [32, 64],
             "activation": "relu",
             "dropout_rate": 0.5,
-            "task": "classification"  # or "regression"
+            "task": "classification"
         },
         "training": {
             "batch_size": 64,

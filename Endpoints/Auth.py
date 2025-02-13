@@ -30,7 +30,6 @@ users_db = {}
 
 @router.post ("/token")
 async def login(username: str, password: str):
-    # Simple auth for demo
     token = jwt.encode (
         {"sub": username, "exp": datetime.utcnow () + timedelta (hours=24)},
         SECRET_KEY,

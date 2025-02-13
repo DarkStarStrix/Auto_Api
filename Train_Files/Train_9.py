@@ -87,7 +87,6 @@ def main():
         if torch.cuda.is_available ():
             torch.cuda.manual_seed (42)
 
-        # Generate sample data
         n_samples = 500
         n_features = 10
         n_classes = 3
@@ -95,7 +94,6 @@ def main():
         X = np.random.randn (n_samples, n_features)
         y = np.random.randint (0, n_classes, n_samples)
 
-        # Train LightGBM
         print ("Starting LightGBM training...")
         lightgbm_config = get_lightgbm_config ()
         lightgbm_config ['model'].update ({
@@ -105,7 +103,6 @@ def main():
         model = train_lightgbm (X, y, lightgbm_config)
         print ("LightGBM training completed successfully!")
 
-        # Save model
         save_path = 'models'
         os.makedirs (save_path, exist_ok=True)
         torch.save (

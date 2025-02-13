@@ -87,7 +87,6 @@ def main():
         if torch.cuda.is_available():
             torch.cuda.manual_seed(42)
 
-        # Generate sample data
         n_samples = 500
         n_features = 10
         n_classes = 2
@@ -95,7 +94,6 @@ def main():
         X = np.random.randn(n_samples, n_features)
         y = np.random.randint(0, n_classes, n_samples)
 
-        # Train SVM
         print("Starting SVM training...")
         svm_config = get_svm_config()
         svm_config['model'].update({
@@ -105,7 +103,6 @@ def main():
         model = train_svm(X, y, svm_config)
         print("SVM training completed successfully!")
 
-        # Save model
         save_path = 'models'
         os.makedirs(save_path, exist_ok=True)
         torch.save(

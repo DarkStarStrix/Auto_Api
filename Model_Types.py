@@ -41,22 +41,16 @@ class LinearRegressionModel (BaseModel):
 
     def _compute_loss(self, batch):
         x, y = batch
-        # Ensure proper dimensions
-        x = x.float ().view (x.size (0), -1)  # Flatten any input dimensions
-        y = y.float ().view (-1, 1)  # Reshape target to [batch_size, 1]
+        x = x.float ().view (x.size (0), -1)
+        y = y.float ().view (-1, 1)
 
-        # Forward pass
         y_hat = self (x)
 
-        # Compute MSE loss
         loss = nn.MSELoss () (y_hat, y)
 
-        # Compute metrics
         with torch.no_grad ():
-            # MSE
             self.log ('mse', loss, prog_bar=True)
 
-            # R² score
             y_mean = torch.mean (y)
             ss_tot = torch.sum ((y - y_mean) ** 2)
             ss_res = torch.sum ((y - y_hat) ** 2)
@@ -80,22 +74,17 @@ class LogisticRegressionModel (BaseModel):
 
     def _compute_loss(self, batch):
         x, y = batch
-        # Ensure proper dimensions
-        x = x.float ().view (x.size (0), -1)  # Flatten any input dimensions
-        y = y.float ().view (-1, 1)  # Reshape target to [batch_size, 1]
+        x = x.float ().view (x.size (0), -1)
+        y = y.float ().view (-1, 1)
 
-        # Forward pass
         y_hat = self (x)
 
-        # Compute loss
         loss = nn.BCELoss () (y_hat, y)
 
-        # Compute metrics
         with torch.no_grad ():
             predictions = (y_hat > 0.5).float ()
             accuracy = (predictions == y).float ().mean ()
 
-            # Compute precision and recall
             true_positives = ((predictions == 1) & (y == 1)).float ().sum ()
             predicted_positives = (predictions == 1).float ().sum ()
             actual_positives = (y == 1).float ().sum ()
@@ -103,7 +92,6 @@ class LogisticRegressionModel (BaseModel):
             precision = true_positives / predicted_positives if predicted_positives > 0 else torch.tensor (0.0)
             recall = true_positives / actual_positives if actual_positives > 0 else torch.tensor (0.0)
 
-            # Log metrics
             self.log ('accuracy', accuracy, prog_bar=True)
             self.log ('precision', precision, prog_bar=True)
             self.log ('recall', recall, prog_bar=True)
@@ -118,7 +106,6 @@ class NaiveBayesModel (BaseModel):
         self.input_dim = config ['model'] ['input_dim']
         self.output_dim = config ['model'] ['output_dim']
 
-        # Parameters for Gaussian NB
         self.class_priors = nn.Parameter (torch.zeros (self.output_dim))
         self.feature_means = nn.Parameter (torch.zeros (self.output_dim, self.input_dim))
         self.feature_vars = nn.Parameter (torch.ones (self.output_dim, self.input_dim))
@@ -238,22 +225,18 @@ class KMeansModel (pl.LightningModule):
         self.learning_rate = config ['training'].get ('learning_rate', 0.001)
         self.batch_size = config ['training'].get ('batch_size', 32)
 
-        # Initialize centroids as learnable parameters
         self.centroids = nn.Parameter (torch.randn (self.n_clusters, self.input_dim))
 
-        # Initialize trackers
         self.cluster_sizes = None
         self.inertia = None
         self.n_features = self.input_dim
 
-        # Data storage
         self.train_data = None
         self.val_data = None
 
     def _compute_distances(self, x):
-        # Compute Euclidean distances between points and centroids
-        x_expanded = x.unsqueeze (1)  # Shape: (batch_size, 1, input_dim)
-        centroids_expanded = self.centroids.unsqueeze (0)  # Shape: (1, n_clusters, input_dim)
+        x_expanded = x.unsqueeze (1)
+        centroids_expanded = self.centroids.unsqueeze (0)
         distances = torch.norm (x_expanded - centroids_expanded, dim=2)
         return distances
 
@@ -273,16 +256,13 @@ class KMeansModel (pl.LightningModule):
         x, _ = batch
         distances, assignments = self (x)
 
-        # Compute inertia (sum of squared distances to nearest centroid)
         min_distances = torch.min (distances, dim=1) [0]
         loss = torch.mean (min_distances ** 2)
 
         with torch.no_grad ():
-            # Update inertia
             self.inertia = loss.item ()
             self.log ('inertia', self.inertia, prog_bar=True)
 
-            # Compute and log cluster sizes
             unique_clusters, counts = torch.unique (assignments, return_counts=True)
             sizes = torch.zeros (self.n_clusters, device=self.device)
             sizes [unique_clusters] = counts.float ()
@@ -311,33 +291,31 @@ class KMeansModel (pl.LightningModule):
         """Return training dataloader"""
         if self.train_data is None:
             raise ValueError ("Training data not set. Call set_train_data first.")
-        dataset = TensorDataset (self.train_data, self.train_data)  # Use same data for X and y
+        dataset = TensorDataset (self.train_data, self.train_data)
         return DataLoader (dataset, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
         """Return validation dataloader"""
         if self.val_data is None:
             return None
-        dataset = TensorDataset (self.val_data, self.val_data)  # Use same data for X and y
+        dataset = TensorDataset (self.val_data, self.val_data)
         return DataLoader (dataset, batch_size=self.batch_size, shuffle=False)
 
 
 class LightGBMModel (pl.LightningModule):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ ()
-        self.save_hyperparameters (config)  # Save hyperparameters
-        self.automatic_optimization = False  # Turn off automatic optimization
+        self.save_hyperparameters (config)
+        self.automatic_optimization = False
 
         self.input_dim = config ['model'] ['input_dim']
         self.output_dim = config ['model'] ['output_dim']
         self.learning_rate = config ['training'].get ('learning_rate', 0.01)
         self.num_leaves = config ['model'].get ('num_leaves', 31)
 
-        # Initialize model
         self.model = None
         self.feature_importance = None
 
-        # Model parameters
         self.params = {
             'objective': 'multiclass' if self.output_dim > 2 else 'binary',
             'num_class': self.output_dim if self.output_dim > 2 else None,
@@ -350,11 +328,9 @@ class LightGBMModel (pl.LightningModule):
         if self.model is None:
             return torch.zeros (x.size (0), self.output_dim, device=self.device)
 
-        # Get predictions
         x_np = x.cpu ().numpy ()
         preds = self.model.predict (x_np)
 
-        # Convert to tensor
         if self.output_dim > 2:
             return torch.from_numpy (preds).float ().to (self.device)
         else:
@@ -366,7 +342,6 @@ class LightGBMModel (pl.LightningModule):
         x_np = x.cpu ().numpy ()
         y_np = y.cpu ().numpy ()
 
-        # Train LightGBM model
         if self.model is None:
             train_data = lgb.Dataset (x_np, y_np)
             self.model = lgb.train (self.params, train_data, num_boost_round=1)
@@ -379,12 +354,10 @@ class LightGBMModel (pl.LightningModule):
                 init_model=self.model
             )
 
-        # Get predictions for logging
         y_hat = self (x)
         predictions = torch.argmax (y_hat, dim=1)
         accuracy = (predictions == y).float ().mean ()
 
-        # Log metrics
         self.log ('train_accuracy', accuracy, prog_bar=True)
 
         if self.model is not None:
@@ -402,7 +375,6 @@ class LightGBMModel (pl.LightningModule):
         self.log ('val_accuracy', accuracy, prog_bar=True)
 
     def configure_optimizers(self):
-        # No optimizer needed
         return None
 
     def configure_callbacks(self):
@@ -412,9 +384,9 @@ class LightGBMModel (pl.LightningModule):
 class RandomForestModel(pl.LightningModule):
     def __init__(self, config: Dict[str, Any]):
         super().__init__()
-        self.save_hyperparameters(config)  # Save hyperparameters
+        self.save_hyperparameters(config)
 
-        self.automatic_optimization = False  # Turn off automatic optimization
+        self.automatic_optimization = False
 
         self.input_dim = config['model']['input_dim']
         self.output_dim = config['model']['output_dim']
@@ -423,7 +395,6 @@ class RandomForestModel(pl.LightningModule):
         self.feature_names = config['model'].get('feature_names', None)
         self.class_names = config['model'].get('class_names', None)
 
-        # Initialize the RandomForest model
         self.model = RandomForestClassifier(n_estimators=self.n_estimators, max_depth=self.max_depth)
         self.is_fitted = False
 
@@ -431,11 +402,9 @@ class RandomForestModel(pl.LightningModule):
         if not self.is_fitted:
             return torch.zeros(x.size(0), self.output_dim, device=self.device)
 
-        # Get predictions
         x_np = x.cpu().numpy()
         preds = self.model.predict(x_np)
 
-        # Convert to tensor
         if self.output_dim > 2:
             return torch.from_numpy(preds).float().to(self.device)
         else:
@@ -447,21 +416,17 @@ class RandomForestModel(pl.LightningModule):
         x_np = x.cpu().numpy()
         y_np = y.cpu().numpy()
 
-        # Train the RandomForest model
         self.model.fit(x_np, y_np)
         self.is_fitted = True
 
-        # Compute and return the loss
         loss = self._compute_loss(batch)
 
-        # Get predictions for logging
         y_hat = self.forward(x)
         if y_hat.dim() == 1:
             y_hat = y_hat.unsqueeze(1)
         predictions = torch.argmax(y_hat, dim=1)
         accuracy = (predictions == y).float().mean()
 
-        # Log metrics
         self.log('train_accuracy', accuracy, prog_bar=True)
         return loss
 
@@ -475,7 +440,6 @@ class RandomForestModel(pl.LightningModule):
         self.log('val_accuracy', accuracy, prog_bar=True)
 
     def configure_optimizers(self):
-        # No optimizer needed
         return None
 
     def configure_callbacks(self):
@@ -491,8 +455,8 @@ class RandomForestModel(pl.LightningModule):
 class SVMModel (pl.LightningModule):
     def __init__(self, config: Dict [str, Any]):
         super ().__init__ ()
-        self.save_hyperparameters(config)  # Save hyperparameters
-        self.automatic_optimization = False  # Turn off automatic optimization
+        self.save_hyperparameters(config)
+        self.automatic_optimization = False
 
         self.input_dim = config ['model'] ['input_dim']
         self.output_dim = config ['model'] ['output_dim']
@@ -561,7 +525,6 @@ class GaussianMixtureModel (pl.LightningModule):
     def configure_callbacks(self):
         return [GaussianMixtureVisualizer ()]
 
-# Deep Learning Module
 class CNNModel(BaseModel):
     def _create_model(self):
         layers = []

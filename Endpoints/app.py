@@ -16,7 +16,6 @@ from lightning_auto import AutoML
 app = FastAPI ()
 security = HTTPBearer ()
 
-# Store active jobs
 jobs = {}
 
 
@@ -64,8 +63,7 @@ async def get_configs():
 @app.post ("/api/v1/train")
 async def start_training(
         request: TrainingRequest,
-        background_tasks: BackgroundTasks,
-        token: HTTPAuthorizationCredentials = Depends (security)
+        background_tasks: BackgroundTasks
 ):
     templates = get_config_templates ()
     if request.config_name not in templates:
@@ -89,8 +87,7 @@ async def start_training(
 
 @app.get ("/api/v1/jobs/{job_id}")
 async def get_job_status(
-        job_id: str,
-        token: HTTPAuthorizationCredentials = Depends (security)
+        job_id: str
 ):
     if job_id not in jobs:
         raise HTTPException (status_code=404, detail="Job not found")
@@ -99,21 +96,18 @@ async def get_job_status(
 
 @app.delete ("/api/v1/jobs/{job_id}")
 async def stop_job(
-        job_id: str,
-        token: HTTPAuthorizationCredentials = Depends (security)
+        job_id: str
 ):
     if job_id not in jobs:
         raise HTTPException (status_code=404, detail="Job not found")
     if jobs [job_id].status == "training":
-        # Implement emergency stop logic
         jobs [job_id].status = "stopped"
         jobs [job_id].end_time = datetime
     return {"status": "stopped"}
 
 
 @app.post ("/api/v1/token")
-async def generate_token(api_key: str):
-    # Implement your authentication logic
+async def generate_token():
     token = jwt.encode (
         {"user_id": str (uuid.uuid4 ())},
         "your-secret-key",

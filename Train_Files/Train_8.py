@@ -24,13 +24,10 @@ def train_kmeans(X: np.ndarray, config: Dict [str, Any]):
             torch.cuda.empty_cache ()
         gc.collect ()
 
-        # Ensure X is a numpy array with proper type
         X = np.asarray (X, dtype=np.float32)
 
-        # Convert to tensor
         X_tensor = torch.from_numpy (X)
 
-        # Create train/validation split indices
         num_samples = len (X_tensor)
         indices = torch.randperm (num_samples)
 
@@ -38,16 +35,13 @@ def train_kmeans(X: np.ndarray, config: Dict [str, Any]):
         train_indices = indices [:train_size]
         val_indices = indices [train_size:]
 
-        # Split the data using indices
         X_train = X_tensor [train_indices]
         X_val = X_tensor [val_indices]
 
-        # Create model
         model = create_kmeans_model (config)
 
-        # Create data loaders
-        train_dataset = TensorDataset (X_train, X_train)  # Use same data for X and y
-        val_dataset = TensorDataset (X_val, X_val)  # Use same data for X and y
+        train_dataset = TensorDataset (X_train, X_train)
+        val_dataset = TensorDataset (X_val, X_val)
 
         train_loader = DataLoader (
             train_dataset,
@@ -65,7 +59,6 @@ def train_kmeans(X: np.ndarray, config: Dict [str, Any]):
             pin_memory=False
         )
 
-        # Configure trainer
         trainer = pl.Trainer (
             max_epochs=config ['training'] ['epochs'],
             accelerator="auto",
@@ -80,7 +73,6 @@ def train_kmeans(X: np.ndarray, config: Dict [str, Any]):
             precision=32,
         )
 
-        # Train model
         trainer.fit (model, train_loader, val_loader)
         return model
 
@@ -92,28 +84,23 @@ def train_kmeans(X: np.ndarray, config: Dict [str, Any]):
 def main():
     """Main function to demonstrate KMeans training."""
     try:
-        # Set random seeds for reproducibility
         torch.manual_seed (42)
         np.random.seed (42)
         if torch.cuda.is_available ():
             torch.cuda.manual_seed (42)
 
-        # Generate synthetic data
         n_samples = 500
         n_features = 10
         n_clusters = 3
 
-        # Generate clustered data with clear separation
         centers = np.random.randn (n_clusters, n_features) * 5
         X = np.vstack ([
             np.random.randn (n_samples // n_clusters, n_features) + center
             for center in centers
         ])
 
-        # Shuffle the data
         np.random.shuffle (X)
 
-        # Train KMeans
         print ("Starting KMeans training...")
         kmeans_config = get_kmeans_config ()
         kmeans_config ['model'].update ({
@@ -123,7 +110,6 @@ def main():
         model = train_kmeans (X, kmeans_config)
         print ("KMeans training completed successfully!")
 
-        # Save model
         save_path = 'models'
         os.makedirs (save_path, exist_ok=True)
         torch.save (

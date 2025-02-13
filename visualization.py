@@ -2,13 +2,12 @@
 import os
 import traceback
 
-import matplotlib.colors as Ellipse
-import matplotlib.colors as ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pydot
 import seaborn as sns
 import torch
+from matplotlib.colors import LogNorm
 from pytorch_lightning.callbacks import Callback
 from sklearn.metrics import confusion_matrix
 from sklearn.tree import export_graphviz
@@ -831,8 +830,8 @@ class SVMVisualizer (Callback):
 
             # Plot decision boundary if input dimension is 2
             if pl_module.input_dim == 2:
-                X, y = trainer.datamodule.train_dataloader ().dataset.tensors
-                self.plot_decision_boundary (pl_module.model, X.cpu ().numpy ())
+                X = pl_module.validation_data  # Ensure this is the correct data
+                self.plot_density_function (pl_module.model, X)
 
         except Exception as e:
             print (f"Error in visualization: {str (e)}")
@@ -855,41 +854,41 @@ class SVMVisualizer (Callback):
         plt.savefig (os.path.join (self.log_dir, 'loss.png'))
         plt.close ()
 
-    def plot_decision_boundary(self, X, y, Z=None):
-        # Define the mesh grid
+    @staticmethod
+    def plot_linear_decision_boundary(model, X):
+        model.coef_ [0]
+        model.intercept_ [0]
+
         x_min, x_max = X [:, 0].min () - 1, X [:, 0].max () + 1
         y_min, y_max = X [:, 1].min () - 1, X [:, 1].max () + 1
         xx, yy = np.meshgrid (np.arange (x_min, x_max, 0.01),
                               np.arange (y_min, y_max, 0.01))
 
-        # Predict the function value for the whole grid
-        self.predict (np.c_ [xx.ravel (), yy.ravel ()])
+        Z = model.predict (np.c_ [xx.ravel (), yy.ravel ()])
         Z = Z.reshape (xx.shape)
 
-        # Plot the contour and training examples
-        plt.contourf (xx, yy, Z, alpha=0.8, cmap=ListedColormap)
-        plt.scatter (X [:, 0], X [:, 1], c=y, edgecolor='k', s=20, cmap=ListedColormap)
+        plt.contourf (xx, yy, Z, alpha=0.8)
+        plt.scatter (X [:, 0], X [:, 1], c='black', edgecolor='k', s=20)
         plt.xlim (xx.min (), xx.max ())
         plt.ylim (yy.min (), yy.max ())
         plt.title ("Decision Boundary")
         plt.show ()
 
-    def predict(self, param):
+    def plot_density_function(self, model, X):
         pass
 
 
-class GaussianMixtureVisualizer (Callback):
+class GaussianMixtureVisualizer(Callback):
     def __init__(self, log_dir: str = "training_plots/gaussian_mixture"):
-        super ().__init__ ()
+        super().__init__()
         self.log_dir = log_dir
-        os.makedirs (log_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)
         self.metrics_history = {
             'train_loss': [],
             'val_loss': [],
-            'gaussian_mixture': []
+            'decision_boundary': []
         }
 
-   # this is the function called at the end of each epoch
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, **kwargs):
         pass
 
@@ -909,11 +908,10 @@ class GaussianMixtureVisualizer (Callback):
 
             self._plot_metrics ()
 
-            if trainer.datamodule is None:
-                print ("Error: datamodule is None")
-            else:
-                X = trainer.datamodule.train_dataloader ().dataset.tensors [0]
-                self._plot_gaussian_mixture (pl_module.model, X)
+            # Plot decision boundary if input dimension is 2
+            if pl_module.input_dim == 2:
+                X_train = pl_module.validation_data
+                self.plot_gmm_density (X_train, pl_module.model, self.log_dir)
 
         except Exception as e:
             print (f"Error in visualization: {str (e)}")
@@ -921,61 +919,35 @@ class GaussianMixtureVisualizer (Callback):
             traceback.print_exc ()
 
     def _plot_metrics(self):
-        plt.figure (figsize=(12, 5))
-        epochs = range (1, len (self.metrics_history ['train_loss']) + 1)
+        plt.figure(figsize=(12, 5))
+        epochs = range(1, len(self.metrics_history['train_loss']) + 1)
 
-        plt.plot (epochs, self.metrics_history ['train_loss'], 'b-', label='Train Loss')
-        plt.plot (epochs, self.metrics_history ['val_loss'], 'r-', label='Validation Loss')
-        plt.title ('Model Loss')
-        plt.xlabel ('Epoch')
-        plt.ylabel ('Loss')
-        plt.grid (True)
-        plt.legend ()
+        plt.plot(epochs, self.metrics_history['train_loss'], 'b-', label='Train Loss')
+        plt.plot(epochs, self.metrics_history['val_loss'], 'r-', label='Validation Loss')
+        plt.title('Model Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.grid(True)
+        plt.legend()
 
-        plt.tight_layout ()
-        plt.savefig (os.path.join (self.log_dir, 'loss.png'))
-        plt.close ()
-
-    def _plot_gaussian_mixture(self, model, X):
-        try:
-            # Plot the data points
-            plt.figure (figsize=(10, 8))
-            plt.scatter (X [:, 0], X [:, 1], s=10, c='black', alpha=0.5)
-
-            # Plot the Gaussian Mixture components
-            for i in range (model.n_components):
-                cov = model.covariances_ [i]
-                self._plot_ellipse (cov)
-
-            plt.title ('Gaussian Mixture Model')
-            plt.xlabel ('Feature 1')
-            plt.ylabel ('Feature 2')
-            plt.grid (True)
-            plt.savefig (os.path.join (self.log_dir, 'gaussian_mixture.png'))
-            plt.close ()
-
-        except Exception as e:
-            print (f"Error in _plot_gaussian_mixture: {str (e)}")
-            raise
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.log_dir, 'loss.png'))
+        plt.close()
 
     @staticmethod
-    def _plot_ellipse(cov):
-        try:
-            # Calculate the eigenvectors and eigenvalues
-            eig_vals, eig_vecs = np.linalg.eig (cov)
+    def plot_gmm_density(X_train, clf, log_dir):
+        x = np.linspace (-20.0, 30.0)
+        y = np.linspace (-20.0, 40.0)
+        X, Y = np.meshgrid (x, y)
+        XX = np.array ([X.ravel (), Y.ravel ()]).T
+        Z = -clf.score_samples (XX)
+        Z = Z.reshape (X.shape)
 
-            # Get the major and minor axes
-            major_axis = np.argmax (eig_vals)
-            1 - major_axis
+        plt.contour (X, Y, Z, norm=LogNorm (vmin=1.0, vmax=1000.0), levels=np.logspace (0, 3, 10))
+        plt.colorbar (shrink=0.8, extend="both")
+        plt.scatter (X_train [:, 0], X_train [:, 1], 0.8)
 
-            # Calculate the angle of rotation
-            np.degrees (np.arctan (eig_vecs [major_axis, 1] / eig_vecs [major_axis, 0]))
-
-            # Create the ellipse
-            ellipse = Ellipse
-
-            plt.gca ().add_patch (ellipse)
-
-        except Exception as e:
-            print (f"Error in _plot_ellipse: {str (e)}")
-            raise
+        plt.title ("Negative log-likelihood predicted by a GMM")
+        plt.axis ("tight")
+        plt.savefig (os.path.join (log_dir, 'gmm_density.png'))
+        plt.close ()

@@ -1,5 +1,3 @@
-# train_2.py
-
 import os
 import gc
 import torch
@@ -26,46 +24,38 @@ def create_model(config: Dict [str, Any]):
 def train_model(X: np.ndarray, y: np.ndarray, config: Dict[str, Any]):
     """Train a model with the given data and configuration."""
     try:
-        # Clear any existing tensors from GPU memory
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
 
-        # Normalize the data
         scaler = StandardScaler()
         X = scaler.fit_transform(X)
-        print(X[:5])  # Print the first few rows to verify
+        print(X[:5])
 
-        # Split the dataset into training and testing sets
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Convert data to tensors (on CPU)
         X_train_tensor = torch.FloatTensor(X_train)
         y_train_tensor = torch.FloatTensor(y_train).view(-1, 1)
         X_val_tensor = torch.FloatTensor(X_val)
         y_val_tensor = torch.FloatTensor(y_val).view(-1, 1)
 
-        # Create datasets
         train_dataset = data.TensorDataset(X_train_tensor, y_train_tensor)
         val_dataset = data.TensorDataset(X_val_tensor, y_val_tensor)
 
-        # Optimized DataLoader settings
         dataloader_kwargs = {
             'batch_size': config['training'].get('batch_size', 32),
-            'num_workers': 0,  # Set to 0 to avoid multiprocessing issues
-            'pin_memory': False,  # Set too False to reduce memory usage
-            'persistent_workers': False,  # Set to False as we're not using workers
+            'num_workers': 0,
+            'pin_memory': False,
+            'persistent_workers': False,
         }
 
         train_loader = data.DataLoader(train_dataset, shuffle=True, **dataloader_kwargs)
         val_loader = data.DataLoader(val_dataset, shuffle=False, **dataloader_kwargs)
 
-        # Create model
         model = create_model(config)
 
-        # Configure trainer with memory optimizations
         trainer = pl.Trainer(
-            max_epochs=100,  # Set the number of epochs to 100
+            max_epochs=100,
             accelerator="auto",
             devices=1,
             callbacks=model.configure_callbacks(),
@@ -76,11 +66,10 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict[str, Any]):
             deterministic=True,
             detect_anomaly=True,
             gradient_clip_val=config['training'].get('gradient_clip_val', 0.5),
-            accumulate_grad_batches=1,  # Remove gradient accumulation
+            accumulate_grad_batches=1,
             precision=32,
         )
 
-        # Train model
         trainer.fit(model, train_loader, val_loader)
 
         return model
@@ -93,18 +82,15 @@ def train_model(X: np.ndarray, y: np.ndarray, config: Dict[str, Any]):
 def main():
     """Main function to run the training."""
     try:
-        # Set random seeds for reproducibility
         torch.manual_seed (42)
         np.random.seed (42)
         if torch.cuda.is_available ():
             torch.cuda.manual_seed (42)
 
-        # Load the advertising data
         data = pd.read_csv ('C:/Users/kunya/PycharmProjects/Auto_Api/Data/processed_advertising.csv')
         X = data [['TV']].values
         y = data ['Sales'].values
 
-        # Get and update config
         config = get_linear_regression_config ()
         config ['model'] ['input_dim'] = X.shape [1]
         config ['model'] ['type'] = 'linear_regression'
@@ -114,14 +100,13 @@ def main():
             'gradient_clip_val': 0.5,
             'accumulate_grad_batches': 2,
             'max_steps': 100,
-            'learning_rate': 1  # Adjust learning rate if necessary
+            'learning_rate': 1
         })
 
         print ("Starting training...")
         model = train_model (X, y, config)
         print ("Training completed successfully!")
 
-        # Save the model
         save_path = 'models'
         os.makedirs (save_path, exist_ok=True)
         torch.save (model.state_dict (), os.path.join (save_path, 'model.pt'))
@@ -131,7 +116,6 @@ def main():
         print (f"Error in main: {str (e)}")
         raise
     finally:
-        # Cleanup
         if torch.cuda.is_available ():
             torch.cuda.empty_cache ()
         gc.collect ()

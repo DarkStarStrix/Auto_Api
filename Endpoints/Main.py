@@ -17,7 +17,6 @@ app.add_middleware (
     allow_headers=["*"],
 )
 
-# Ensure static directory exists
 os.makedirs ("static", exist_ok=True)
 
 app.mount ("/static", StaticFiles (directory="static"), name="static")

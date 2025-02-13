@@ -87,7 +87,6 @@ def main():
         if torch.cuda.is_available ():
             torch.cuda.manual_seed (42)
 
-        # Generate sample data
         n_samples = 500
         n_features = 10
         n_classes = 3
@@ -95,7 +94,6 @@ def main():
         X = np.random.randn (n_samples, n_features)
         y = np.random.randint (0, n_classes, n_samples)
 
-        # Train Random Forest
         print ("Starting Random Forest training...")
         random_forest_config = get_random_forest_config ()
         random_forest_config ['model'].update ({
@@ -105,7 +103,6 @@ def main():
         model = train_random_forest (X, y, random_forest_config)
         print ("Random Forest training completed successfully!")
 
-        # Save model
         save_path = 'models'
         os.makedirs (save_path, exist_ok=True)
         torch.save (

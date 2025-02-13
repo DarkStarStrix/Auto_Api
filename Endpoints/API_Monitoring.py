@@ -1,7 +1,7 @@
 from prometheus_client import Counter, Histogram, start_http_server
 import time
 
-# Metrics
+
 REQUEST_COUNT = Counter ('api_requests_total', 'Total API requests')
 LATENCY = Histogram ('api_latency_seconds', 'API latency')
 JOB_STATUS = Counter ('job_status_total', 'Job status counts', ['status'])
