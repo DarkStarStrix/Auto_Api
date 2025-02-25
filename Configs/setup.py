@@ -34,7 +34,7 @@ setup (
         "uvicorn==0.15.0",
         "requests==2.31.0",
         "pydantic==1.10.18",
-        "python-jose==3.3.0",
+        "python-jose==3.4.0",
         "python-dotenv==1.0.0",
         "PyJWT==2.10.1",
 
