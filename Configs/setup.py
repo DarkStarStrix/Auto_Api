@@ -24,7 +24,7 @@ setup (
         # Core ML
         "torch==2.7.1",
         "pytorch-lightning==2.4.0",
-        "transformers==4.50.0",
+        "transformers==4.53.0",
         "numpy==1.24.4",
         "pandas==2.0.3",
         "scipy==1.13.1",
