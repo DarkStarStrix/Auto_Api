@@ -32,7 +32,7 @@ setup (
         # API and Web
         "fastapi==0.109.1",
         "uvicorn==0.15.0",
-        "requests==2.31.0",
+        "requests==2.32.4",
         "pydantic==1.10.18",
         "python-jose==3.4.0",
         "python-dotenv==1.0.0",
